@@ -1,5 +1,5 @@
 # Predicting Optimal Treatment Outcomes for Complex Anxiety Disorders
-**Author:** Margrete Soya Heimvik  
+**Author:** M. S. Heimvik  
 **Supervisors:** M. A. Helmich, S. U. Johnson, K. M. Pålerud, R. Hagen, A. Hoffart  
 **Institution:** University of Oslo, COPE (Complexity in treatment Outcome, Psychopathology and Epidemiology) research group, Modum Bad psychiatric hospital 
 **Contact:** [margrsh@uio.no](mailto:margrsh@uio.no)
