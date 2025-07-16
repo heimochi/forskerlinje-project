@@ -1,4 +1,3 @@
-# Forskerlinje; Student Research Line
 # Predicting Optimal Treatment Outcomes for Complex Anxiety Disorders
 
 This project explores how machine learning can be used to personalize treatment for patients with complex anxiety disorders. By analyzing routinely collected clinical data from Modum Bad (2016–2024), we aim to predict which treatment—**Cognitive Behavioral Therapy (CBT)** or **Metacognitive Therapy (MCT)**—offers the greatest benefit for each patient.
