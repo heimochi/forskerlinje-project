@@ -33,7 +33,7 @@ Predicting Optimal Treatment Outcomes for Patients With Complex Anxiety Disorder
 https://doi.org/10.17605/OSF.IO/TNKZY
 
 
-## 📬 Contact
+## Contact
 
 For questions or collaboration inquiries, please contact:  
 **Margrete S. Heimvik** – [margrsh@uio.no](mailto:margrsh@uio.no)
