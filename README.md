@@ -3,7 +3,7 @@
 **Supervisors:** M. A. Helmich, S. U. Johnson, K. M. Pålerud, R. Hagen, A. Hoffart  
 **Institution:** University of Oslo, COPE (Complexity in treatment Outcome, Psychopathology and Epidemiology) research group, Modum Bad psychiatric hospital 
 
-This project explores how machine learning can be used to personalize treatment for patients with complex anxiety disorders. By analyzing routinely collected clinical data from Modum Bad (2016–2024), we aim to predict which treatment **Cognitive Behavioral Therapy (CBT)** or **Metacognitive Therapy (MCT)** offers the greatest benefit for each patient.
+This project explores how machine learning can be used to personalize treatment for patients with complex anxiety disorders. By analyzing routinely collected clinical data from Modum Bad (2016–2024), we aim to predict which treatment, **Cognitive Behavioral Therapy (CBT)** or **Metacognitive Therapy (MCT)**, offers the greatest benefit for each patient.
 
 ## Objective
 
