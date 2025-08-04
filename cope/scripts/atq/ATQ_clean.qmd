@@ -1,0 +1,540 @@
+---
+title: "Automatic Thoughts Questionnaire Cleaning"
+author: "MochiBear.Hei"
+date: "09.05.2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    page-layout: full
+    html-math-method: katex
+editor: source
+---
+
+```{css, echo = F}
+body{
+  font-family: Helvetica;
+  font-size: 16pt;
+  max-width: 1000px;
+  margin: auto;
+  margin-left:310px;
+}
+pre{
+  font-size: 14px;
+}
+/* Headers */
+h1{
+    font-size: 24pt;
+  }
+h1,h2{
+    font-size: 20pt;
+  }
+h3,h4,h5,h6{
+  font-size: 18pt;
+}
+#TOC {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  overflow:auto;
+}
+```
+
+```{r setup,}
+#| include: false
+#| message: false
+#| warning: false
+#| results: hide
+knitr::opts_chunk$set(echo = TRUE, dpi = 300)
+
+# Data manipulation
+library(readxl)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(reshape2)
+
+# Plotting
+library(ggplot2)
+library(naniar)
+
+# Factor analysis
+library(psych)
+library(lavaan)
+
+# Random Forest visualizations
+library(randomForest)
+library(caret)
+```
+# This script loads and preprocesses ATQ assessment data and consent records.
+Key steps include:
+- Renaming and selecting relevant variables
+- Standardizing assessment context labels and treatment names
+- Merging with consent data and filtering by treatment type
+- Handling missing data and duplicates
+- Creating missing "Admission" rows using "Assessment" data
+- Standardizing the ATQ sum score and renaming timepoints
+- Final dataset is saved as 'atq_f.csv' for downstream modeling
+
+# Notable: Removes respondents with >30% missing data, ensures all have post-treatment data,
+and imputes missing Admission scores based on Assessment values.
+
+# Read in data
+```{r, warning=FALSE, message=FALSE}
+ATQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/ATQ_avid.xls") #3710 obs. of 57 var
+#View(ATQ)
+  
+consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
+#View(consent)
+
+```
+
+### Change names
+
+```{r}
+# Check names
+colnames(ATQ)
+
+# Rename
+ATQ <- ATQ %>% 
+  rename(
+    assessment_id = `assessment instance id`,
+    assessment_version = `assessment version`,
+    assessment_title = `assessment instance title`,
+    assessment_owner_id = `assessment instance owner id`,
+    assessment_start_date = `assessment instance start date`,
+    assessment_end_date = `assessment instance end date`,
+    assessment_created_date = `assessment instance created date`,
+    assessment_last_modified = `assessment instance last modified/submitted`,
+    assessment_started = `assessment instance has started`,
+    assessment_submitted = `assessment instance is submitted`,
+    assessment_closed = `assessment instance is closed`,
+    assessment_context_label = `assessment instance context label`,
+    assessment_first_started_date = `assessment instance first time started date`,
+    assessment_first_submitted_date = `assessment instance first time submitted date`,
+    assessment_portal = `assessment instance portal of submission`,
+    treatment_id = `treatment id`,
+    treatment_name = `treatment name`,
+    treatment_type_id = `treatment type id`,
+    treatment_type_name = `treatment type name`,
+    treatment_role = `treatment role`,
+    respondent_id = `respondent id`,
+    respondent_username = `respondent username`,
+    respondent_account_enabled = `respondent account enabled`,
+    respondent_test_account = `respondent test account`,
+    respondent_last_login = `respondent last login`,
+    respondent_communcation_disabled = `respondent communication disabled`, 
+    Q1 = `Q1`,
+    Q2 = `Q2`,
+    Q3 = `Q3`,
+    Q4 = `Q4`,
+    Q5 = `Q5`,
+    Q6 = `Q6`,
+    Q7 = `Q7`,
+    Q8 = `Q8`,
+    Q9 = `Q9`,
+    Q10 = `Q10`,
+    Q11 = `Q11`,
+    Q12 = `Q12`,
+    Q13 = `Q13`,
+    Q14 = `Q14`,
+    Q15 = `Q15`,
+    Q16 = `Q16`,
+    Q17 = `Q17`,
+    Q18 = `Q18`,
+    Q19 = `Q19`,
+    Q20 = `Q20`,
+    Q21 = `Q21`,
+    Q22 = `Q22`,
+    Q23 = `Q23`,
+    calc_aa = `calculation:MODUMBAD-ATQ-AA`,               
+    calc_pan = `calculation:MODUMBAD-ATQ-PAN-AA`,            
+    calc_pan_sum = `calculation:MODUMBAD-ATQ-PAN-SUM`,           
+    calc_ptsd = `calculation:MODUMBAD-ATQ-PTSD-AA`,           
+    calc_ptsd_sum = `calculation:MODUMBAD-ATQ-PTSD-SUM`,        
+    calc_sos = `calculation:MODUMBAD-ATQ-SOS-AA`,         
+    calc_sos_sum = `calculation:MODUMBAD-ATQ-SOS-SUM`,          
+    calc_sum = `calculation:MODUMBAD-ATQ-SUM`
+ )
+
+```
+
+Selecting only necessary columns
+```{r}
+# Select only from the BAI dataset
+ATQ <- ATQ %>% 
+  select(
+    respondent_id, 
+    assessment_context_label,
+    assessment_created_date,
+    treatment_id,
+    treatment_name, 
+    treatment_type_id, 
+    assessment_created_date,
+    starts_with("Q"), 
+    starts_with("calc")
+  )
+
+# Select only in the consent
+consent<- consent %>% 
+  select(respondent_id, consent)
+```
+
+## Function for patient count per group
+```{r}
+# Function to summarize the count of patients at each measurement point
+summarize_patient_counts <- function(dataset) {
+  
+  # Summarize the count of patients for each assessment context label
+  patient_counts <- dataset %>%
+    group_by(assessment_context_label) %>%
+    summarize(
+      patient_count = n_distinct(respondent_id),
+      .groups = 'drop' # To ungroup after summarization
+    )
+  
+  return(patient_counts)
+}
+
+# Example usage
+# counts <- summarize_patient_counts(your_dataset)
+# print(counts)
+
+```
+
+# Consistent coding and filtering
+
+```{r}
+# Merge only the 'consent' column with the BAI dataset by 'respondent_id'
+filt_ATQ <- merge(ATQ, consent, 
+                    by = "respondent_id", 
+                    all = TRUE, 
+                    suffixes = c("", "_c"))
+  
+
+# Replace empty strings with NA only in character columns
+filt_ATQ  <- filt_ATQ  %>%
+  mutate(across(where(is.character), ~na_if(., '')))
+
+# Check N
+print(summarize_patient_counts(filt_ATQ )) 
+```
+
+## Assessment context label
+
+Required measurements:
+Assessment = "Utredning", "P1 Kartlegging"
+Admission = "Innkomst", "Behandlingsstart", "P2 Innkomst"
+Post-treatment = "Utskriving", "P2 Utskriving"
+  
+```{r}
+# Check assessment_context_label
+unique(filt_ATQ $assessment_context_label)
+
+
+# Consistent coding for assessment_context_label
+filt_ATQ  <- filt_ATQ  %>%
+  mutate(
+    assessment_context_label = case_when(
+      assessment_context_label %in% c("Utredning", "P1 Kartlegging") ~ "Assessment",
+      assessment_context_label %in% c("Innkomst", "Behandlingsstart", "P2 Innkomst") ~ "Admission",
+      assessment_context_label %in% c("Utskriving", "P2 Utskriving") ~ "Post-treatment", 
+      TRUE ~ assessment_context_label
+    )
+  )
+
+# Check N
+print(summarize_patient_counts(filt_ATQ )) 
+
+# Filter out to keep only rows with specified assessment_context_labels
+filt_ATQ  <- filt_ATQ  %>%
+  filter(assessment_context_label %in% c("Assessment", "Admission", "Post-treatment"))
+
+# Check N
+print(summarize_patient_counts(filt_ATQ )) 
+```
+
+## Department and consent
+```{r}
+# Filter the merged dataset based on 'consent' and 'treatment_type_id'
+filt_ATQ  <- filt_ATQ  %>%
+  filter(treatment_type_id == 10, consent %in% c(1, NA))
+
+# Check N
+print(summarize_patient_counts(filt_ATQ))
+head(filt_ATQ)
+```
+
+## Treatment Name
+
+```{r}
+# Check treatment_name
+unique(filt_ATQ$treatment_name)
+
+# Consistent coding for treatment_name
+filt_ATQ <- filt_ATQ %>%
+  mutate(
+    treatment_name = case_when(
+      treatment_name %in% c("Angst1", "Angst 1", "Angst1 UO") ~ "Angst 1",
+      treatment_name %in% c("Angst2", "Angst 2") ~ "Angst 2",
+      treatment_name == "Angst1 Booster" ~ "Angst 1 Booster",
+      treatment_name == "Angst2 Booster" ~ "Angst 2 Booster",
+      treatment_name %in% c("Angst3", "Angst 3") ~ "Angst 3",
+      treatment_name %in% c("Angst4", "Angst 4") ~ "Angst 4",
+      treatment_name %in% c("Angst5", "Angst 5") ~ "Angst 5",
+      treatment_name %in% c("Angst12", "Angst 12") ~ "Angst 12",
+      treatment_name == "Angst P2" ~ "Angst P2",
+      TRUE ~ treatment_name
+    )
+  )
+
+# Remove boosters (patients that have returned to treatment)
+filt_ATQ <- filt_ATQ %>%
+ filter(treatment_name %in% c("Angst", "Angst 1","Angst 2","Angst 3", "Angst 4", "Angst 5", "Angst 12", "Angst P1", "Angst P2" ))
+
+# Check N
+print(summarize_patient_counts(filt_ATQ))
+```
+
+## Handle duplicate records
+
+```{r}
+# Define the columns to consider for identifying duplicates
+id_columns <- c("respondent_id", "assessment_context_label")
+
+# Remove duplicates based on specific columns, keeping the first occurrence
+filt_ATQ  <- filt_ATQ  %>%
+  distinct(across(all_of(id_columns)), .keep_all = TRUE)
+
+# Check if duplicates are removed
+print(nrow(filt_ATQ)) #dataset w/ duplicates removed
+print(nrow(filt_ATQ))
+
+# Check N
+print(summarize_patient_counts(filt_ATQ))
+
+```
+
+## Ensure variables have correct data types (numeric, character, etc.)
+1. Columns starting with "Q" are scale columns and should be numeric.
+2. The assessment_context_label column treatment_name,  treatment_type_id is categorical (factor)
+3. The respondent_id column is an identifier and should be a factor
+
+```{r}
+# Check columns
+str(filt_ATQ)
+```
+
+```{r}
+# Apply transformations accordingly
+filt_ATQ <- filt_ATQ %>%
+  mutate(
+    across(starts_with("Q"), as.numeric),       # Convert scale columns starting with 'Q' to numeric
+    assessment_context_label = as.factor(assessment_context_label), # Convert 'assessment_context_label' to a factor
+    treatment_name = as.factor(treatment_name), # Convert 'treatment_name' to a factor
+    respondent_id = as.factor(respondent_id), # Convert 'respondent_gender' to a factor
+    treatment_type_id = as.factor(treatment_type_id)  # Convert 'treatment_type_id' to numeric
+  )
+
+# Verify that the transformations are correct
+str(filt_ATQ)
+
+```
+
+# Handle missing values
+## Visualize missing data
+```{r,  warning=FALSE, message=FALSE}
+#| echo: false
+
+# Summarize missing data by variable
+miss_var_summary <- miss_var_summary(filt_ATQ)
+
+# Visualize the percentage of missing data by variable
+ggplot(data = miss_var_summary, aes(x = variable, y = pct_miss)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Percentage of Missing Data by Variable",
+       x = "Variables",
+       y = "Percentage Missing") +
+  theme_minimal()
+```
+
+## Prepare dataset
+
+
+```{r}
+## Missingness
+# Filter out respondents who are missing all scores
+impute_ATQ <- filt_ATQ %>%
+  rowwise() %>%
+  filter(sum(is.na(c_across(starts_with("Q")))) != length(c_across(starts_with("Q")))) %>%
+  ungroup()
+
+print(summarize_patient_counts(impute_ATQ))
+head(impute_ATQ)
+```
+
+Remove observations with more than 30% missing data
+```{r}
+# Calculate the proportion of missing data for each respondent and assessment context label
+respondents_over_30_missing <- impute_ATQ %>%
+  rowwise() %>%
+  mutate(missing_prop = sum(is.na(c_across(starts_with("Q")))) / length(c_across(starts_with("Q")))) %>%
+  ungroup() %>%
+  filter(missing_prop > 0.30) %>%
+  select(respondent_id, assessment_context_label, missing_prop)
+
+# View the respondents with more than 30% missing data
+print(respondents_over_30_missing)
+
+# Remove specific respondent data if condition matches
+impute_ATQ <- impute_ATQ %>%
+  filter(!(respondent_id == 1766 & assessment_context_label == "Admission") &
+         !(respondent_id == 2165 & assessment_context_label == "Assessment") &
+         !(respondent_id == 2382 & assessment_context_label == "Admission") &
+         !(respondent_id == 2618 & assessment_context_label == "Assessment") &
+         !(respondent_id == 2915 & assessment_context_label == "Assessment") &
+         !(respondent_id == 3309 & assessment_context_label == "Assessment") &
+         !(respondent_id == 3345 & assessment_context_label == "Assessment") &
+         !(respondent_id == 3442 & assessment_context_label == "Assessment") &
+         !(respondent_id == 5734 & assessment_context_label == "Admission") &
+         !(respondent_id == 6303 & assessment_context_label == "Admission") &
+         !(respondent_id == 7051 & assessment_context_label == "Assessment") &
+         !(respondent_id == 7426 & assessment_context_label == "Admission") &
+         !(respondent_id == 8705 & assessment_context_label == "Admission"))
+
+# Check N 
+print(summarize_patient_counts(impute_ATQ))
+```
+
+Remove respondents who do not have any post-treatment measurements
+```{r}
+has_post_treatment <- impute_ATQ %>%
+  group_by(respondent_id) %>%
+  filter(any(assessment_context_label == "Post-treatment")) %>%
+  ungroup()
+
+# Remove rows where all post-treatment measurements are NA
+impute_ATQ <- has_post_treatment %>%
+  rowwise() %>%
+  filter(!(assessment_context_label == "Post-treatment" & 
+          sum(is.na(c_across(starts_with("Q")))) == length(c_across(starts_with("Q"))))) %>%
+  ungroup()
+
+print(summarize_patient_counts(impute_ATQ))
+head(impute_ATQ)
+```
+
+Create missing admission rows 
+```{r}
+# Define context labels
+context_labels <- c("Admission", "Assessment", "Post-treatment")
+
+# Create all combinations of respondent IDs and assessment context labels
+all_combinations <- expand.grid(
+  respondent_id = unique(impute_ATQ$respondent_id), 
+  assessment_context_label = context_labels
+)
+
+# Join the all combinations with the existing data
+full_data <- left_join(all_combinations, impute_ATQ, 
+                                by = c("respondent_id", "assessment_context_label")) %>%
+  arrange(respondent_id)
+```
+
+
+Keep only relevant columns 
+```{r}
+# Filter out only the relevant columns: "assessment_context_label", "respondent_id", calc_sum
+impute_full_data <- full_data %>%
+  select(respondent_id, assessment_context_label, calc_sum)
+
+```
+
+
+## Person-score imputation
+```{r}
+# Copy assessment scores to the admission rows where applicable
+filled_data <- impute_full_data %>%
+  group_by(respondent_id) %>%
+  mutate(calc_sum = ifelse(assessment_context_label == "Admission" & is.na(calc_sum),
+                           first(calc_sum[assessment_context_label == "Assessment"], default = NA),
+                           calc_sum)) %>%
+  ungroup()
+
+# View the filled data
+head(filled_data)
+```
+
+# Calculating ATQ sum score
+
+## Prepare dataset
+```{r}
+# Filter to retain only 'Admission' and 'Post-treatment' rows
+atq_sumscore <- filled_data %>%
+  filter(assessment_context_label %in% c("Admission", "Post-treatment"))
+
+
+# Display the first few rows of the merged data
+head(atq_sumscore)
+print(summarize_patient_counts(atq_sumscore))
+
+```
+
+# Prepare for RF
+
+## Check datatype
+```{r}
+str(atq_sumscore)
+```
+
+## Mean-center and standardize variables
+```{r}
+# Mean-center and standardize the BAI sum scores
+atq_sumscore <- atq_sumscore %>%
+  mutate(
+    atq_sumscore = as.numeric(scale(calc_sum, center = TRUE, scale = TRUE))
+  )
+# View the standardized dataset
+head(atq_sumscore)
+
+
+# Check N
+print(summarize_patient_counts(atq_sumscore))
+```
+
+## Rename "Admission" to "Pre-treatment"
+```{r}
+# Rename "admission" to "pretreatment" in the assessment_context_label column
+atq_sumscore <- atq_sumscore %>%
+  mutate(assessment_context_label = recode(assessment_context_label, 
+                                           Admission = "Pre-treatment"))
+# Select only the relevant columns
+atq_sumscore <- atq_sumscore %>%
+  select(respondent_id, assessment_context_label, atq_sumscore)
+
+# View the first few rows of the transformed dataset to verify changes
+head(atq_sumscore)
+```
+
+# Save Csv
+```{r}
+# Save the cleaned dataset to a CSV file
+write.csv(atq_sumscore, "atq_f.csv", row.names = FALSE)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```

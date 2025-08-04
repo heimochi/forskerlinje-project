@@ -1,0 +1,90 @@
+---
+title: "Load data"
+author: "MochiBear.Hei"
+date: "04.08.2025"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    page-layout: full
+    html-math-method: katex
+editor: source
+---
+
+```{css, echo = F}
+body{
+  font-family: Helvetica;
+  font-size: 16pt;
+  max-width: 1000px;
+  margin: auto;
+  margin-left:310px;
+}
+pre{
+  font-size: 14px;
+}
+/* Headers */
+h1{
+    font-size: 24pt;
+  }
+h1,h2{
+    font-size: 20pt;
+  }
+h3,h4,h5,h6{
+  font-size: 18pt;
+}
+#TOC {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  overflow:auto;
+}
+```
+
+```{r setup,}
+#| include: false
+#| message: false
+#| warning: false
+#| results: hide
+knitr::opts_chunk$set(echo = TRUE, dpi = 300)
+
+# Data manipulation
+library(readxl)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(reshape2)
+
+# Plotting
+library(ggplot2)
+library(naniar)
+
+# Factor analysis
+library(psych)
+library(lavaan)
+
+# Random Forest visualizations
+library(randomForest)
+library(caret)
+```
+
+
+
+```{r}
+# Read data
+ATQ <- read_excel("data/raw/ATQ_avid.xls")
+
+consent <- read_csv("data/raw/consent_a.csv")
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

@@ -1,0 +1,36 @@
+
+
+One centralized file to run all preprocessing:
+```{r}
+source("scripts/shared/00_helpers.R")
+
+# ----------------- BDI -----------------
+source("scripts/bdi/00_load.R")       # loads BDI and consent
+data <- BDI
+source("scripts/shared/01_merge_consent.R")
+source("scripts/shared/02_filter_data.R")
+source("scripts/shared/03_handle_missing.R")
+source("scripts/bdi/04_score_bdi.R")
+write.csv(data, "outputs/bdi_f.csv", row.names = FALSE)
+
+# ----------------- ATQ -----------------
+source("scripts/atq/00_load.R")
+data <- ATQ
+```
+
+You could even wrap each questionnaire in a function for automation:
+
+```{r}
+run_pipeline <- function(q_name, load_path, score_script, output_name) {
+  source(load_path)
+  data <- get(q_name)
+  source("scripts/shared/01_merge_consent.R")
+  source("scripts/shared/02_filter_data.R")
+  source("scripts/shared/03_handle_missing.R")
+  source(score_script)
+  write.csv(data, paste0("outputs/", output_name, ".csv"), row.names = FALSE)
+}
+
+run_pipeline("BDI", "scripts/bdi/00_load.R", "scripts/bdi/04_score_bdi.R", "bdi_f")
+run_pipeline("ATQ", "scripts/atq/00_load.R", "scripts/atq/04_score_atq.R", "atq_f")
+```
