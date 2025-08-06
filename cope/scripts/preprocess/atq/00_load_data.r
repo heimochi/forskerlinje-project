@@ -15,10 +15,10 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # ATQ Assessment data
-ATQ <- read_excel("data/dataset/ATQ_avid.xls")  # 3710 obs. of 57 variables
+ATQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/ATQ_avid.xls")  # 3710 obs. of 57 variables
 
 # Consent data
-consent <- read_csv("data/dataset/scripts/anon/consent_a.csv")  # 5901 obs. of 30 variables
+consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv")  # 5901 obs. of 30 variables
 
 # ---------------------------------------------------------
 # Rename ATQ column names for consistency
