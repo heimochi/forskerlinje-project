@@ -1,0 +1,2 @@
+# Ignore the specific script
+scripts/atq/00_load_data.r
