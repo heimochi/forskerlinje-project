@@ -6,10 +6,8 @@ execute:
   echo: true
 ---
 
-One centralized file to run all preprocessing:
-
 ```{r setup}
-# Load helpers
+# Load functions
 source("cope/scripts/preprocess/shared/utilities.r")
 ```
 
@@ -26,7 +24,7 @@ write.csv(data, "outputs/atq_f.csv", row.names = FALSE)
 
 ```
 
-??wrap each questionnaire in a function for automation:
+?? wrap each questionnaire in a function for automation: would b cool
 
 ```{r}
 run_pipeline <- function(q_name, load_path, score_script, output_name) {
