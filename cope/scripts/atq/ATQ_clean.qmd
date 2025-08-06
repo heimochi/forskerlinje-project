@@ -89,7 +89,7 @@ ATQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/ATQ_avid.xls")
 #View(ATQ)
   
 consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
-#View(consent)
+View(consent)
 
 ```
 
