@@ -1,38 +1,23 @@
----
-title: "Utilities"
-author: "mochibear"
-format: html
-editor: visual
----
+# ---------------------------
+# Utility Functions for Preprocessing
+# Author: mochibear
+# ---------------------------
+library(dplyr)
 
-## Shared functions
-
-## Function for patient count at each measurement 
-
-```{r}
+# Function: summarize_patient_counts
+# Description:
+#   Counts the number of unique respondents per assessment timepoint (e.g., Assessment, Admission, Post-treatment).
+#   Useful for checking N per measurement stage.
 summarize_patient_counts <- function(dataset) {
-  
-  # Summarize the count of patients for each assessment context label
   patient_counts <- dataset %>%
-    group_by(assessment_context_label) %>%
-    summarize(
-      patient_count = n_distinct(respondent_id),
-      .groups = 'drop' # To ungroup after summarization
+    dplyr::group_by(assessment_context_label) %>%
+    dplyr::summarize(
+      patient_count = dplyr::n_distinct(respondent_id),
+      .groups = "drop"
     )
-  
   return(patient_counts)
 }
 
-# Example usage
-# counts <- summarize_patient_counts(your_dataset)
+# Example usage:
+# counts <- summarize_patient_counts(my_data)
 # print(counts)
-
-```
-
-
-
-```{r}
-
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
