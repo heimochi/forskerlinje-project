@@ -13,7 +13,11 @@ source("cope/scripts/preprocess/shared/utilities.r")
 
 ```{r}
 source("cope/scripts/preprocess/atq/00_load_data.r")
+
+# Set working data
 data <- ATQ
+# Clean using shared function
+data <- clean_clinical_data(data)
 
 source("cope/scripts/preprocess/shared/01_filter.r")
 source("cope/scripts/preprocess/shared/02_handle_missing.r")

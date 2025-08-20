@@ -5,7 +5,7 @@
 # Description: Loads raw ATQ assessment data and consent records.
 # ---------------------------------------------------------
 
-# Required Libraries
+# Libraries
 library(readxl)     # for reading Excel files
 library(readr)      # for reading CSV files
 library(dplyr)      # for data manipulation
