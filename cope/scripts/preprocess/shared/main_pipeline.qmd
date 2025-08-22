@@ -8,7 +8,8 @@ execute:
 
 ```{r setup}
 # Load functions
-source("cope/scripts/preprocess/shared/utilities.r")
+source("cope/scripts/preprocess/shared/utilities.r") #small helpers
+source("cope/scripts/preprocess/shared/01_filter.r") #clean_clinical_data
 ```
 
 ```{r}
@@ -19,7 +20,6 @@ data <- ATQ
 # Clean using shared function
 data <- clean_clinical_data(data)
 
-source("cope/scripts/preprocess/shared/01_filter.r")
 source("cope/scripts/preprocess/shared/02_handle_missing.r")
 
 source("cope/scripts/preprocess/atq/03_score_atq.r")

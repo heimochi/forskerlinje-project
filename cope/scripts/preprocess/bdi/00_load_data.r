@@ -31,9 +31,7 @@ BDI <- BDI %>%
     `treatment type id`,
     `respondent id`,
     starts_with("Q"),
-    `calculation:BDI-II-ANS-AMOUNT`,
-    `calculation:BDI-II-TOT`,
-    `calculation:BDI-II-ANS-AMOUNT-PERCENT`
+    starts_with("calc")
   ) %>%
   rename(
     assessment_context_label= `assessment instance context label`,

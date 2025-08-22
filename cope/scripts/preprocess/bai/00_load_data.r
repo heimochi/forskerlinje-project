@@ -31,8 +31,7 @@ BAI <- BAI %>%
     treatment_name, 
     treatment_type_id, 
     starts_with("Q"), 
-    calc_ans,
-    calc_tot
+    starts_with("calc")
   )
 
 # ---------------------------------------------------------

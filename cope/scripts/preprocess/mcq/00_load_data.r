@@ -32,18 +32,7 @@ MCQ <- MCQ %>%
     `treatment type id`,
     `respondent id`,
     starts_with("Q"),
-    `calculation:MCQ-30-CC-AA`,
-    `calculation:MCQ-30-CC`,
-    `calculation:MCQ-30-CSC-AA`,
-    `calculation:MCQ-30-CSC`,
-    `calculation:MCQ-30-NC-AA`,
-    `calculation:MCQ-30-NC`,
-    `calculation:MCQ-30-NEG-AA`,
-    `calculation:MCQ-30-NEG`,
-    `calculation:MCQ-30-POS-AA`,
-    `calculation:MCQ-30-POS`,
-    `calculation:MCQ-30-Total-AA`,
-    `calculation:MCQ-30-Total`
+    starts_with("calc")
   ) %>%
   rename(
     assessment_context_label = `assessment instance context label`,

@@ -32,7 +32,7 @@ IIP <- IIP %>%
     `treatment type id`,
     `respondent id`,
     starts_with("Q"),
-    starts_with("calculation")
+    starts_with("calc")
   ) %>%
   rename(
     assessment_context_label = `assessment instance context label`,

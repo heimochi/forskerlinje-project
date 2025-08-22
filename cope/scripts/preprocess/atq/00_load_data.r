@@ -28,17 +28,15 @@ ATQ <- ATQ %>%
   select(
     `respondent id`,
     `assessment instance context label`,
-    `assessment instance created date`,
     `treatment id`,
     `treatment name`,
     `treatment type id`,
     starts_with("Q"),
-    starts_with("calculation:MODUMBAD-ATQ-")
+    starts_with("calc")
   ) %>%
   rename(
     respondent_id = `respondent id`,
     assessment_context_label = `assessment instance context label`,
-    assessment_created_date = `assessment instance created date`,
     treatment_id = `treatment id`,
     treatment_name = `treatment name`,
     treatment_type_id = `treatment type id`,
@@ -60,7 +58,7 @@ ATQ <- ATQ %>%
 consent <- consent %>%
   select(respondent_id, consent)
 
-  # Merge only the 'consent' column with the BAI dataset by 'respondent_id'
+  # Merge only the 'consent' column with the ATQ dataset by 'respondent_id'
 ATQ <- merge(ATQ, consent, 
                     by = "respondent_id", 
                     all = TRUE, 

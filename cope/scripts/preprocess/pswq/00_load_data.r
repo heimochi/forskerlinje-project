@@ -1,8 +1,8 @@
 # ---------------------------------------------------------
-# Load MCQ Data and Consent
+# Load PSWQ Data and Consent
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw MCQ assessment data and consent records.
+# Description: Loads raw PSWQ assessment data and consent records.
 # ---------------------------------------------------------
 
 # Libraries
@@ -14,33 +14,34 @@ library(dplyr)      # for data manipulation
 # Load raw data
 # ---------------------------------------------------------
 
-# BAI Assessment data
-MCQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/MCQ_avid.xls") #4100 obs of 68 var
+# PSWQ Assessment data
+PSWQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/PSWQavid.xls")
 
 # Consent data
 consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
 # ---------------------------------------------------------
-# Rename n select MCQ column names for consistency
+# Rename n select PSWQ column names for consistency
 # ---------------------------------------------------------
 
 # Select only from the dataset
-MCQ <- MCQ %>%
+PSWQ <- PSWQ %>%
   select(
     `assessment instance context label`,
-    `assessment instance created date`,
     `treatment id`,
     `treatment name`,
     `treatment type id`,
     `respondent id`,
-    starts_with("Q")
+    starts_with("Q"),
+    starts_with("calc")
   ) %>%
   rename(
     assessment_context_label = `assessment instance context label`,
-    assessment_created_date  = `assessment instance created date`,
     treatment_id             = `treatment id`,
     treatment_name           = `treatment name`,
     treatment_type_id        = `treatment type id`,
-    respondent_id            = `respondent id`
+    respondent_id            = `respondent id`,
+    calc_PSWQ_all = `calculation:PSWQ-ALL-AA`,
+    calc_PSWQ_sum = `calculation:PSWQ-ALL-SUM`
   )
 
 # ---------------------------------------------------------
@@ -50,16 +51,16 @@ MCQ <- MCQ %>%
 consent <- consent %>%
   select(respondent_id, consent)
 
-  # Merge only the 'consent' column with the MCQ dataset by 'respondent_id'
-MCQ <- merge(MCQ, consent, 
+  # Merge only the 'consent' column with the PSWQ dataset by 'respondent_id'
+PSWQ <- merge(PSWQ, consent, 
                     by = "respondent_id", 
                     all = TRUE, 
                     suffixes = c("", "_c"))
   
 
 # Replace empty strings with NA only in character columns
-MCQ  <- MCQ  %>%
+PSWQ  <- PSWQ  %>%
   mutate(across(where(is.character), ~na_if(., '')))
 
 # Check N
-print(summarize_patient_counts(MCQ))
+print(summarize_patient_counts(PSWQ))
