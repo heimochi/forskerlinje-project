@@ -9,20 +9,23 @@ execute:
 ```{r setup}
 # Load functions
 source("cope/scripts/preprocess/shared/utilities.r") #small helpers
-source("cope/scripts/preprocess/shared/01_filter.r") #clean_clinical_data
+source("cope/scripts/preprocess/shared/01_filter.r") #filter_clinical_data
 ```
 
 ```{r}
 source("cope/scripts/preprocess/atq/00_load_data.r")
-
 # Set working data
 data <- ATQ
-# Clean using shared function
-data <- clean_clinical_data(data)
+# filter using function
+data <- filter_clinical_data(data)
+print(summarize_patient_counts(data))
 
-source("cope/scripts/preprocess/shared/02_handle_missing.r")
 
-source("cope/scripts/preprocess/atq/03_score_atq.r")
+source("cope/scripts/preprocess/shared/02_data_types.r")
+
+source("cope/scripts/preprocess/shared/03_handle_missing.r")
+
+source("cope/scripts/preprocess/atq/04_score_atq.r")
 
 write.csv(data, "outputs/atq_f.csv", row.names = FALSE)
 

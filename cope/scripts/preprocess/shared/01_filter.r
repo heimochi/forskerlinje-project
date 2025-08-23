@@ -10,14 +10,14 @@ library(dplyr)
 
 # ---------------------------------------------------------
 # Function: filter_instrument()
-# Filters and cleans input instrument data based on:
+# Filters and filters input instrument data based on:
 # - Department filtering
 # - Context label recoding (Assessment, Admission, Post-Treatment)
 # - Treatment name standardization (Remove Boosters)
 # - Duplicate removal 
 # ---------------------------------------------------------
 
-clean_clinical_data <- function(data, id_col = "respondent_id") {
+filter_clinical_data <- function(data, id_col = "respondent_id") {
 
   # Standardize assessment_context_label
   data <- data %>% 
@@ -31,8 +31,7 @@ clean_clinical_data <- function(data, id_col = "respondent_id") {
           "SGKT Utredning") ~ "Assessment",
         assessment_context_label %in% c("Innkomst", "P2 Innkomst", "Inn sekv2", "Behandlingsstart") ~ "Admission",
         assessment_context_label %in% c("Utskriving", "P2 Utskriving", "Ut sekv 1",
-          "Behandlingsslutt",
-          "SGKT Gruppeslutt") ~ "Post-treatment",
+          "Behandlingsslutt", "SGKT Gruppeslutt") ~ "Post-treatment",
         TRUE ~ assessment_context_label
       )
     ) %>%
@@ -61,7 +60,10 @@ clean_clinical_data <- function(data, id_col = "respondent_id") {
     filter(treatment_name %in% c("Angst", "Angst 1", "Angst 2", "Angst 3", "Angst 4", "Angst 5", "Angst 12", "Angst P1", "Angst P2")) %>%
 
     # Remove duplicates
-    distinct(across(all_of(c(id_col, "assessment_context_label"))), .keep_all = TRUE)
+    distinct(across(all_of(c(id_col, "assessment_context_label"))), .keep_all = TRUE) %>%
+
 
   return(data)
 }
+
+
