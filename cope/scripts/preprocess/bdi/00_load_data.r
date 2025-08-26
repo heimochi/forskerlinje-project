@@ -34,14 +34,39 @@ BDI <- BDI %>%
     starts_with("calc")
   ) %>%
   rename(
-    assessment_context_label= `assessment instance context label`,
-    treatment_id            = `treatment id`,
-    treatment_name          = `treatment name`,
-    treatment_type_id       = `treatment type id`,
-    respondent_id           = `respondent id`,
-    calc_BDI_ans            = `calculation:BDI-II-ANS-AMOUNT`,
-    calc_BDI_tot            = `calculation:BDI-II-TOT`,
-    calc_BDI_per            = `calculation:BDI-II-ANS-AMOUNT-PERCENT`
+    assessment_context_label = `assessment instance context label`,
+    treatment_id             = `treatment id`,
+    treatment_name           = `treatment name`,
+    treatment_type_id        = `treatment type id`,
+    respondent_id            = `respondent id`,
+
+    # BDI items (short and clear)
+    bdi_sadness        = Q1,
+    bdi_pessimism      = Q2,
+    bdi_failure        = Q3,
+    bdi_loss_pleasure  = Q4,
+    bdi_guilt          = Q5,
+    bdi_punishment     = Q6,
+    bdi_self_dislike   = Q7,
+    bdi_self_critical  = Q8,
+    bdi_suicidal       = Q9,
+    bdi_crying         = Q10,
+    bdi_agitation      = Q11,
+    bdi_loss_interest  = Q12,
+    bdi_indecisive     = Q13,
+    bdi_worthlessness  = Q14,
+    bdi_loss_energy    = Q15,
+    bdi_sleep_change   = Q16,
+    bdi_irritability   = Q17,
+    bdi_appetite_change= Q18,
+    bdi_concentration  = Q19,
+    bdi_fatigue        = Q20,
+    bdi_loss_sex       = Q21,
+
+    # Calculated scores
+    calc_bdi_answers_amount   = `calculation:BDI-II-ANS-AMOUNT`,
+    calc_bdi_total_sum        = `calculation:BDI-II-TOT`,
+    calc_bdi_answers_percent  = `calculation:BDI-II-ANS-AMOUNT-PERCENT`
   )
 
 

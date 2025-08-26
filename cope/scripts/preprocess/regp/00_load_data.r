@@ -26,31 +26,36 @@ consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon
 # Select only from the dataset
 REGP <- REGP %>%
   select(
-   respondent_id,
-   assessment_context_label,
-   treatment_type_id,
-   treatment_type_name,
-   respondent_gender,
-   treatment_name,
-   Q1:Q16
+    respondent_id,
+    assessment_context_label,
+    treatment_id,          # include this for consistency across datasets
+    treatment_name,
+    treatment_type_id,
+    treatment_type_name,   # keep if useful; okay to drop if redundant
+    respondent_gender,     # will rename to regp_gender
+    Q1:Q16
   ) %>%
   rename(
-    birth = `Q1`,
-    partner = `Q2`,
-    number_of_children = `Q3`,
-    work_situation = `Q4`,
-    work_paid = `Q5`,
-    work = `Q6`,
-    work_paid_months = `Q7`,
-    sick_leave_months = `Q8`,
-    sick_leave_reason = `Q9`,
-    pre_treat_out = `Q10`,
-    pre_treatment_out_l= `Q11`,
-    pre_treat_in= `Q12`,
-    pre_treat_in_l= `Q13`,
-    pre_treat_mb= `Q14`,
-    pre_treat_mb_l= `Q15`,
-    year_onset= `Q16`
+    # registration fields (prefixed)
+    regp_birth_year          = Q1,
+    regp_partner             = Q2,
+    regp_children_n          = Q3,
+    regp_work_status         = Q4,
+    regp_work_paid           = Q5,
+    regp_work_type           = Q6,
+    regp_work_paid_months    = Q7,
+    regp_sickleave_months    = Q8,
+    regp_sickleave_reason    = Q9,
+    regp_prev_outpatient     = Q10,
+    regp_prev_outpatient_len = Q11,
+    regp_prev_inpatient      = Q12,
+    regp_prev_inpatient_len  = Q13,
+    regp_prev_mbad           = Q14,
+    regp_prev_mbad_len       = Q15,
+    regp_onset_year          = Q16,
+
+    # bring non-shared field under REGP too
+    regp_gender              = respondent_gender
   )
 
 # ---------------------------------------------------------

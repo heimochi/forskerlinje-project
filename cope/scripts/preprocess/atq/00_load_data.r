@@ -35,19 +35,21 @@ ATQ <- ATQ %>%
     starts_with("calc")
   ) %>%
   rename(
-    respondent_id = `respondent id`,
-    assessment_context_label = `assessment instance context label`,
-    treatment_id = `treatment id`,
-    treatment_name = `treatment name`,
-    treatment_type_id = `treatment type id`,
-    calc_aa = `calculation:MODUMBAD-ATQ-AA`,
-    calc_pan = `calculation:MODUMBAD-ATQ-PAN-AA`,
-    calc_pan_sum = `calculation:MODUMBAD-ATQ-PAN-SUM`,
-    calc_ptsd = `calculation:MODUMBAD-ATQ-PTSD-AA`,
-    calc_ptsd_sum = `calculation:MODUMBAD-ATQ-PTSD-SUM`,
-    calc_sos = `calculation:MODUMBAD-ATQ-SOS-AA`,
-    calc_sos_sum = `calculation:MODUMBAD-ATQ-SOS-SUM`,
-    calc_sum = `calculation:MODUMBAD-ATQ-SUM`
+    respondent_id              = `respondent id`,
+    assessment_context_label   = `assessment instance context label`,
+    treatment_id               = `treatment id`,
+    treatment_name             = `treatment name`,
+    treatment_type_id          = `treatment type id`,
+    
+    # Calculated scores
+    calc_atq_aa               = `calculation:MODUMBAD-ATQ-AA`,
+    calc_atq_pan_aa           = `calculation:MODUMBAD-ATQ-PAN-AA`,
+    calc_atq_pan_sum          = `calculation:MODUMBAD-ATQ-PAN-SUM`,
+    calc_atq_ptsd_aa          = `calculation:MODUMBAD-ATQ-PTSD-AA`,
+    calc_atq_ptsd_sum         = `calculation:MODUMBAD-ATQ-PTSD-SUM`,
+    calc_atq_sos_aa           = `calculation:MODUMBAD-ATQ-SOS-AA`,
+    calc_atq_sos_sum          = `calculation:MODUMBAD-ATQ-SOS-SUM`,
+    calc_atq_total_sum        = `calculation:MODUMBAD-ATQ-SUM`
   )
 
 

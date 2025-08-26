@@ -40,18 +40,25 @@ MCQ <- MCQ %>%
     treatment_name           = `treatment name`,
     treatment_type_id        = `treatment type id`,
     respondent_id            = `respondent id`,
-    calc_MCQ_CC_ans          = `calculation:MCQ-30-CC-AA`,
-    calc_MCQ_CC              = `calculation:MCQ-30-CC`,
-    calc_MCQ_CSC_ans         = `calculation:MCQ-30-CSC-AA`,
-    calc_MCQ_CSC             = `calculation:MCQ-30-CSC`,
-    calc_MCQ_NC_ans          = `calculation:MCQ-30-NC-AA`,
-    calc_MCQ_NC              = `calculation:MCQ-30-NC`,
-    calc_MCQ_NEG_ans         = `calculation:MCQ-30-NEG-AA`,
-    calc_MCQ_NEG             = `calculation:MCQ-30-NEG`,
-    calc_MCQ_POS_ans         = `calculation:MCQ-30-POS-AA`,
-    calc_MCQ_POS             = `calculation:MCQ-30-POS`,
-    calc_MCQ_total_ans       = `calculation:MCQ-30-Total-AA`,
-    calc_MCQ_total           = `calculation:MCQ-30-Total`
+
+    # MCQ subscales
+    calc_mcq_cc_aa            = `calculation:MCQ-30-CC-AA`,
+    # cognitive confidence
+    calc_mcq_cc_sum           = `calculation:MCQ-30-CC`,
+    calc_mcq_csc_aa           = `calculation:MCQ-30-CSC-AA`,
+    # cognitive self-consciousness
+    calc_mcq_csc_sum          = `calculation:MCQ-30-CSC`,
+    calc_mcq_nc_aa            = `calculation:MCQ-30-NC-AA`,
+    # need to control thoughts
+    calc_mcq_nc_sum           = `calculation:MCQ-30-NC`,
+    calc_mcq_neg_aa           = `calculation:MCQ-30-NEG-AA`,
+    # negative beliefs
+    calc_mcq_neg_sum          = `calculation:MCQ-30-NEG`,
+    calc_mcq_pos_aa           = `calculation:MCQ-30-POS-AA`,
+    # positive beliefs
+    calc_mcq_pos_sum          = `calculation:MCQ-30-POS`,
+    calc_mcq_total_aa         = `calculation:MCQ-30-Total-AA`,
+    calc_mcq_total_sum        = `calculation:MCQ-30-Total`
   )
 
 # ---------------------------------------------------------
