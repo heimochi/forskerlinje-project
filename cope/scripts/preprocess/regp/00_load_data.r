@@ -28,15 +28,15 @@ REGP <- REGP %>%
   select(
     respondent_id,
     assessment_context_label,
-    treatment_id,          # include this for consistency across datasets
+    treatment_id,          
     treatment_name,
     treatment_type_id,
-    treatment_type_name,   # keep if useful; okay to drop if redundant
-    respondent_gender,     # will rename to regp_gender
+    treatment_type_name,   
+    respondent_gender,     
     Q1:Q16
   ) %>%
   rename(
-    # registration fields (prefixed)
+ 
     regp_birth_year          = Q1,
     regp_partner             = Q2,
     regp_children_n          = Q3,
@@ -53,8 +53,6 @@ REGP <- REGP %>%
     regp_prev_mbad           = Q14,
     regp_prev_mbad_len       = Q15,
     regp_onset_year          = Q16,
-
-    # bring non-shared field under REGP too
     regp_gender              = respondent_gender
   )
 

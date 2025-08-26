@@ -9,7 +9,6 @@
 library(readxl)     # for reading Excel files
 library(readr)      # for reading CSV files
 library(dplyr)      # for data manipulation
-library(stringr)
 
 # ---------------------------------------------------------
 # Load raw data
@@ -26,22 +25,14 @@ consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon
 
 # Select only from the dataset
 SCL <- SCL %>%
-  # select existing columns (already renamed in your data)
   select(
     respondent_id,
     assessment_context_label,
     treatment_id,
     treatment_name,
     treatment_type_id,
-    matches("^Q\\d+$"),
     starts_with("calc_")
   ) %>%
-  # Q1..Q90 -> scl_q01..scl_q90
-  rename_with(
-    ~ sprintf("scl_q%02d", as.integer(sub("^Q", "", .x))),
-    matches("^Q\\d+$")
-  ) %>%
-  # map current calc_* names -> consistent calc_scl_* names
   rename(
     # Anxiety
     calc_scl_anxiety_raw          = calc_angst_raw,
