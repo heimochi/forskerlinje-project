@@ -9,6 +9,7 @@
 library(readxl)     # for reading Excel files
 library(readr)      # for reading CSV files
 library(dplyr)      # for data manipulation
+library(stringr)
 
 # ---------------------------------------------------------
 # Load raw data
@@ -17,9 +18,9 @@ library(dplyr)      # for data manipulation
 # REGP Assessment data
 REGT <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/reg_t_a.csv") #5901 obs. of 30 var
 
-
 # Consent data
 consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
+
 # ---------------------------------------------------------
 # Rename n select REGP column names for consistency
 # ---------------------------------------------------------
@@ -136,11 +137,13 @@ REGT <- merge(REGT, consent,
                     all = TRUE, 
                     suffixes = c("", "_c"))
   
-
 # Replace empty strings with NA only in character columns
 REGT  <- REGT  %>%
   mutate(across(where(is.character), ~na_if(., '')))
 
+# ---------------------------------------------------------
+# Define variables for downstream analysis of complexity
+# ---------------------------------------------------------
 
 
   ## Define variables
@@ -184,6 +187,64 @@ REGT <- REGT %>%
 # View first few rows of the cleaned data
 head(REGT)
 ```
+# helper to standardize ICD codes
+normalize_icd <- function(icd) {
+  icd %>%
+    str_to_upper() %>% # Convert to uppercase
+    str_remove_all("[^A-Z0-9.]") %>% # Remove non-alphanumeric/non-dot characters
+    str_trim() # Trim whitespace
+}
+REGT <- REGT %>%
+  # Normalize ICD text 
+  mutate(
+    across(c(regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3), normalize_icd)
+  ) %>%
+  # Number of diagnoses (count non-missing/non-empty)
+  mutate(
+    regt_number_of_diagnoses = {
+      icds <- select(., regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3)
+      rowSums(icds != "" & !is.na(icds))
+    }
+  ) %>%
+  # Mood disorder comorbidity flag (F3x codes anywhere)
+  mutate(
+    regt_mood_disorder = if_else(
+      str_detect(paste(regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3, sep = " "),
+                 "\\bF3(0|1|2|3|4|8|9)\\b"),
+      "yes", "no"
+    )
+  ) %>%
+  # Personality disorder complexity (needs SCID done + any PD true)
+  mutate(
+    scid_any_pd = if_any(regt_scid_avoidant:regt_scid_other, ~ .x %in% TRUE),
+    regt_additional_complexity = case_when(
+      is.na(regt_scid_done) ~ NA_character_,
+      regt_scid_done & scid_any_pd ~ "yes",
+      regt_scid_done & !scid_any_pd ~ "no",
+      TRUE ~ "no"
+    )
+  ) %>%
+  # Length of stay (days); guard against NAs and negative values
+  mutate(
+    regt_length_of_stay_days = as.integer(regt_discharge_date - regt_admission_date),
+    regt_length_of_stay_days = if_else(regt_length_of_stay_days < 0, NA_integer_, regt_length_of_stay_days)
+  ) %>%
+  # Combined trauma flag
+  mutate(
+    regt_trauma_any_bin = if_else(
+      rowSums(across(starts_with("regt_trauma_")), na.rm = TRUE) > 0,
+      1L, 0L
+    )
+  ) %>%
+  # drop the helper before narrowing columns
+  select(-scid_any_pd) %>%
+  # keep just variables we will use later
+  select(
+    respondent_id, assessment_context_label, treatment_id, treatment_name,
+    regt_length_of_stay_days,regt_number_of_diagnoses, regt_mood_disorder, 
+    regt_additional_complexity, starts_with("regt_trauma_"),
+    regt_alcohol_drug_abuse_bin, starts_with("calc_regt_gaf_")
+  )
 
 # Check N
 print(summarize_patient_counts(REGT))

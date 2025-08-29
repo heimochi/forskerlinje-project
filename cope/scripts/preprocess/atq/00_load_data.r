@@ -31,7 +31,6 @@ ATQ <- ATQ %>%
     `treatment id`,
     `treatment name`,
     `treatment type id`,
-    starts_with("Q"),
     starts_with("calc")
   ) %>%
   rename(

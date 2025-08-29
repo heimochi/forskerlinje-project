@@ -31,7 +31,6 @@ MCQ <- MCQ %>%
     `treatment name`,
     `treatment type id`,
     `respondent id`,
-    starts_with("Q"),
     starts_with("calc")
   ) %>%
   rename(

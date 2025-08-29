@@ -31,7 +31,6 @@ PSWQ <- PSWQ %>%
     `treatment name`,
     `treatment type id`,
     `respondent id`,
-    starts_with("Q"),
     starts_with("calc")
   ) %>%
   rename(
@@ -40,24 +39,6 @@ PSWQ <- PSWQ %>%
     treatment_name           = `treatment name`,
     treatment_type_id        = `treatment type id`,
     respondent_id            = `respondent id`,
-
-    # PSWQ items (short, recognizable)
-    pswq_no_time_worry   = Q1,
-    pswq_overwhelm       = Q2,
-    pswq_no_tend         = Q3,
-    pswq_many_situations = Q4,
-    pswq_cannot_help     = Q5,
-    pswq_pressure        = Q6,
-    pswq_always          = Q7,
-    pswq_dismiss         = Q8,
-    pswq_after_task      = Q9,
-    pswq_never           = Q10,
-    pswq_no_more         = Q11,
-    pswq_lifetime        = Q12,
-    pswq_notice          = Q13,
-    pswq_cannot_stop     = Q14,
-    pswq_all_time        = Q15,
-    pswq_until_done      = Q16,
 
     # Calculated scores
     calc_pswq_total_aa        = `calculation:PSWQ-ALL-AA`,
