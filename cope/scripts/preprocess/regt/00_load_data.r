@@ -24,7 +24,7 @@ consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon
 # ---------------------------------------------------------
 # Rename n select REGP column names for consistency
 # ---------------------------------------------------------
-REGT <- REGT %>%
+REGT_1 <- REGT %>%
   select(
     respondent_id,
     assessment_context_label,
@@ -34,11 +34,8 @@ REGT <- REGT %>%
     treatment_type_name,   
 
     # admission/discharge & program
-    Q1_QT3_O16,  # admission
-    Q1_QT3_O17,  # discharge
-    Q2_QT4_O18,  # group
-    Q2_QT4_O19,  # dropout reason
-    Q2_QT4_O20,  # dropout time
+    assessment_start_date,  # admission
+    assessment_end_date,  # discharge
     Q3, # alcohol or dugs
     Q6, # childhood trauma sexual
     Q7, # childhood trauma physical
@@ -57,11 +54,8 @@ REGT <- REGT %>%
   ) %>%
   rename(
     # program
-    regt_admission_date   = Q1_QT3_O16,
-    regt_discharge_date   = Q1_QT3_O17,
-    regt_group            = Q2_QT4_O18,
-    regt_dropout_reason   = Q2_QT4_O19,
-    regt_dropout_time     = Q2_QT4_O20,
+    regt_admission_date   = assessment_start_date,
+    regt_discharge_date   = assessment_end_date,
 
     # Substance use
     regt_alcohol_drug_abuse       = Q3,
