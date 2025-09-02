@@ -176,7 +176,9 @@ REGT <- REGT %>%
     TRUE ~ "no" # Default case if SCID is not 1
   ))
 
-  #length of stay
+#length of stay
+
+
 # keep only the newly defined variables and leave out the others
 # View first few rows of the cleaned data
 head(REGT)
