@@ -19,7 +19,7 @@ data <- ATQ
 # filter using function
 data <- filter_clinical_data(data)
 print(summarize_patient_counts(data))
-
+data <- 
 
 source("cope/scripts/preprocess/shared/02_data_types.r")
 

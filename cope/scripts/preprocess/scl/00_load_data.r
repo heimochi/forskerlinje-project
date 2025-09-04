@@ -15,115 +15,92 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # SCL Assessment data
-SCL<- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/SCL_a.csv")
+SCL<- read_csv2("/Users/maggieheimvik/Desktop/COPE/data/dataset/SCL90.csv")  #2081 obs of 1 variable
 
 # Consent data
 consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
+
 # ---------------------------------------------------------
 # Rename n select SCL column names for consistency
 # ---------------------------------------------------------
-
-# Select only from the dataset
 SCL <- SCL %>%
+  # keep IDs, treatment, gender, and only the T-score columns we need
   select(
-    respondent_id,
-    assessment_context_label,
-    treatment_id,
-    treatment_name,
-    treatment_type_id,
-    starts_with("calc_")
+    respondent.id,
+    assessment.instance.context.label,
+    treatment.id, treatment.name, treatment.type.id,
+    respondent.gender,
+    
+    # Global indices (T by sex + validity)
+    calculation.GSI.T.Female, calculation.GSI.T.Male, calculation.GSI.Valid,
+    calculation.PSDI.T.Female, calculation.PSDI.T.Male,
+    calculation.PST.T.Female,  calculation.PST.T.Male,
+    
+    # Dimension T by sex
+    calculation.Angst.T.Female,           calculation.Angst.T.Male,
+    calculation.Depresjon.T.Female,       calculation.Depresjon.T.Male,
+    calculation.Fiendtlighet.T.Female,    calculation.Fiendtlighet.T.Male,
+    calculation.Fobisk.T.Female,          calculation.Fobisk.T.Male,
+    calculation.Interpersonlig.T.Female,  calculation.Interpersonlig.T.Male,
+    calculation.Paranoid.T.Female,        calculation.Paranoid.T.Male,
+    calculation.Psykotisisme.T.Female,    calculation.Psykotisisme.T.Male,
+    calculation.Somatisering.T.Female,    calculation.Somatisering.T.Male,
+    calculation.Tvangssymptomer.T.Female, calculation.Tvangssymptomer.T.Male
   ) %>%
+  # standardize names
   rename(
-    # Anxiety
-    calc_scl_anxiety_raw          = calc_angst_raw,
-    calc_scl_anxiety_sum          = calc_angst_sum,
-    calc_scl_anxiety_t_female     = calc_angst_female,
-    calc_scl_anxiety_t_male       = calc_angst_male,
-    calc_scl_anxiety_valid        = calc_angst_valid,
-
-    # Depression
-    calc_scl_depression_raw       = calc_dep_raw,
-    calc_scl_depression_sum       = calc_dep_sum,
-    calc_scl_depression_t_female  = calc_dep_female,
-    calc_scl_depression_t_male    = calc_dep_male,
-    calc_scl_depression_valid     = calc_dep_valid,
-
-    # Hostility
-    calc_scl_hostility_raw        = calc_host_raw,
-    calc_scl_hostility_sum        = calc_host_sum,
-    calc_scl_hostility_t_female   = calc_host_female,
-    calc_scl_hostility_t_male     = calc_host_male,
-    calc_scl_hostility_valid      = calc_host_valid,
-
-    # Phobic anxiety
-    calc_scl_phobic_raw           = calc_phob_raw,
-    calc_scl_phobic_sum           = calc_phob_sum,
-    calc_scl_phobic_t_female      = calc_phob_female,
-    calc_scl_phobic_t_male        = calc_phob_male,
-    calc_scl_phobic_valid         = calc_phob_valid,
-
-    # Interpersonal sensitivity
-    calc_scl_interpersonal_raw       = calc_inter_raw,
-    calc_scl_interpersonal_sum       = calc_inter_sum,
-    calc_scl_interpersonal_t_female  = calc_inter_female,
-    calc_scl_interpersonal_t_male    = calc_inter_male,
-    calc_scl_interpersonal_valid     = calc_inter_valid,
-
-    # Paranoid ideation
-    calc_scl_paranoid_raw         = calc_paranoid_raw,
-    calc_scl_paranoid_sum         = calc_paranoid_sum,
-    calc_scl_paranoid_t_female    = calc_paranoid_female,
-    calc_scl_paranoid_t_male      = calc_paranoid_male,
-    calc_scl_paranoid_valid       = calc_paranoid_valid,
-
-    # Psychoticism
-    calc_scl_psychoticism_raw     = calc_psycho_raw,
-    calc_scl_psychoticism_sum     = calc_psycho_sum,
-    calc_scl_psychoticism_t_female= calc_psycho_female,
-    calc_scl_psychoticism_t_male  = calc_psycho_male,
-    calc_scl_psychoticism_valid   = calc_psycho_valid,
-
-    # Somatization
-    calc_scl_somatization_raw     = calc_soma_raw,
-    calc_scl_somatization_sum     = calc_soma_sum,
-    calc_scl_somatization_t_female= calc_soma_female,
-    calc_scl_somatization_t_male  = calc_soma_male,
-    calc_scl_somatization_valid   = calc_soma_valid,
-
-    # Additional items
-    calc_scl_additional_raw       = calc_add_raw,
-    calc_scl_additional_sum       = calc_add_sum,
-    calc_scl_additional_valid     = calc_add_valid,
-
-    # Obsessive-compulsive (Tvangssymptomer)
-    calc_scl_ocd_raw              = calc_compul_raw,
-    calc_scl_ocd_sum              = calc_compul_sum,
-    calc_scl_ocd_t_female         = calc_compul_female,
-    calc_scl_ocd_t_male           = calc_compul_male,
-    calc_scl_ocd_valid            = calc_compul_valid,
-
-    # Global indices (sex-specific T + validity)
-    calc_scl_gsi_t_female         = calc_GSI_female,
-    calc_scl_gsi_t_male           = calc_GSI_male,
-    calc_scl_gsi_valid            = calc_GSI_valid,
-
-    calc_scl_psdi_t_female        = calc_PSDI_female,
-    calc_scl_psdi_t_male          = calc_PSDI_male,
-
-    calc_scl_pst_t_female         = calc_PST_female,
-    calc_scl_pst_t_male           = calc_PST_male,
-
-    # SCL-90-R summaries
-    calc_scl_total_aa             = calc_r_AA,
-    calc_scl_total_gsi            = calc_r_GSI,
-    calc_scl_total_psdi           = calc_r_PSDI,
-    calc_scl_total_pst            = calc_r_PST,
-    calc_scl_total_sum            = calc_r_total_sum,
-
-    # PSI
-    calc_scl_psi_valid            = calc_r_PSI_valid,
-    calc_scl_psi                  = calc_r_PSI
+    respondent_id            = respondent.id,
+    assessment_context_label = assessment.instance.context.label,
+    treatment_id             = treatment.id,
+    treatment_name           = treatment.name,
+    treatment_type_id        = treatment.type.id,
+    scl_gender               = respondent.gender
+  ) %>%
+  # collapse sex-specific T to a single T per scale
+  mutate(
+    # globals
+    calc_scl_gsi_t  = case_when(
+      scl_gender == "female" ~ calculation.GSI.T.Female,
+      scl_gender == "male"   ~ calculation.GSI.T.Male,
+      TRUE ~ NA_real_
+    ),
+    calc_scl_psdi_t = case_when(
+      scl_gender == "female" ~ calculation.PSDI.T.Female,
+      scl_gender == "male"   ~ calculation.PSDI.T.Male,
+      TRUE ~ NA_real_
+    ),
+    calc_scl_pst_t  = case_when(
+      scl_gender == "female" ~ calculation.PST.T.Female,
+      scl_gender == "male"   ~ calculation.PST.T.Male,
+      TRUE ~ NA_real_
+    ),
+    
+    # dimensions
+    calc_scl_anxiety_t        = if_else(scl_gender == "female", calculation.Angst.T.Female,           calculation.Angst.T.Male,           missing = NA_real_),
+    calc_scl_depression_t     = if_else(scl_gender == "female", calculation.Depresjon.T.Female,       calculation.Depresjon.T.Male,       missing = NA_real_),
+    calc_scl_hostility_t      = if_else(scl_gender == "female", calculation.Fiendtlighet.T.Female,    calculation.Fiendtlighet.T.Male,    missing = NA_real_),
+    calc_scl_phobic_t         = if_else(scl_gender == "female", calculation.Fobisk.T.Female,          calculation.Fobisk.T.Male,          missing = NA_real_),
+    calc_scl_interpersonal_t  = if_else(scl_gender == "female", calculation.Interpersonlig.T.Female,  calculation.Interpersonlig.T.Male,  missing = NA_real_),
+    calc_scl_paranoid_t       = if_else(scl_gender == "female", calculation.Paranoid.T.Female,        calculation.Paranoid.T.Male,        missing = NA_real_),
+    calc_scl_psychoticism_t   = if_else(scl_gender == "female", calculation.Psykotisisme.T.Female,    calculation.Psykotisisme.T.Male,    missing = NA_real_),
+    calc_scl_somatization_t   = if_else(scl_gender == "female", calculation.Somatisering.T.Female,    calculation.Somatisering.T.Male,    missing = NA_real_),
+    calc_scl_ocd_t            = if_else(scl_gender == "female", calculation.Tvangssymptomer.T.Female, calculation.Tvangssymptomer.T.Male, missing = NA_real_)
+  ) %>%
+  # final tidy set: IDs + one T per scale
+  select(
+    respondent_id, assessment_context_label,
+    treatment_id, treatment_name, treatment_type_id,
+    calc_scl_gsi_t, calc_scl_gsi_valid = calculation.GSI.Valid,
+    calc_scl_psdi_t, calc_scl_pst_t,
+    calc_scl_anxiety_t, calc_scl_depression_t, calc_scl_hostility_t, calc_scl_phobic_t,
+    calc_scl_interpersonal_t, calc_scl_paranoid_t, calc_scl_psychoticism_t,
+    calc_scl_somatization_t, calc_scl_ocd_t
   )
+
+# Keep only those where scl is valid
+SCL <- SCL %>%
+  filter(as.integer(calc_scl_gsi_valid) == 1L)  %>%    # 2070 obs. of 18 variables 
+  select(-calc_scl_gsi_valid)                          # remove the column
 
 # ---------------------------------------------------------
 # Filter for only participants that consented to having their data used
@@ -132,16 +109,20 @@ SCL <- SCL %>%
 consent <- consent %>%
   select(respondent_id, consent)
 
-  # Merge only the 'consent' column with the SCL dataset by 'respondent_id'
-SCL <- merge(PSWQ, consent, 
-                    by = "respondent_id", 
-                    all = TRUE, 
-                    suffixes = c("", "_c"))
-  
+# 1) Build a de-duplicated set of valid IDs (consent == 1 or NA)
+valid_ids <- consent %>%
+  mutate(consent = as.integer(consent)) %>%
+  filter(is.na(consent) | consent == 1L) %>%
+  distinct(respondent_id)
+
+# 2) Keep only those IDs in SCL
+SCL <- SCL %>%
+  filter(respondent_id %in% valid_ids$respondent_id)    #1863 obs of 17 var
 
 # Replace empty strings with NA only in character columns
 SCL  <- SCL  %>%
   mutate(across(where(is.character), ~na_if(., '')))
+
 
 # Check N
 print(summarize_patient_counts(SCL))

@@ -10,21 +10,38 @@ library(readxl)     # for reading Excel files
 library(readr)      # for reading CSV files
 library(dplyr)      # for data manipulation
 library(stringr)
-
+library(lubridate)  #for dates manipulation (admission n discharge)
+library(tidyr)
 # ---------------------------------------------------------
 # Load raw data
 # ---------------------------------------------------------
 
 # REGP Assessment data
-REGT <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/reg_t_a.csv") #5901 obs. of 30 var
+REGT <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/reg_t_a.csv") # 242 obs. of 30 var
 
 # Consent data
 consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
 
 # ---------------------------------------------------------
+# Filter for only participants that consented to having their data used
+# ---------------------------------------------------------
+
+consent <- consent %>%
+  select(respondent_id, consent)
+
+# Merge only the 'consent' column with the REGT dataset by 'respondent_id'
+REGT <- REGT %>%                                      # 382 obs. of 84 variables 
+  left_join(consent, by = "respondent_id") %>%        # 368 obs. of 84 variables 
+  filter(is.na(consent) | consent == 1)
+
+# Replace empty strings with NA only in character columns
+REGT  <- REGT  %>%
+  mutate(across(where(is.character), ~na_if(., '')))
+
+# ---------------------------------------------------------
 # Rename n select REGP column names for consistency
 # ---------------------------------------------------------
-REGT_1 <- REGT %>%
+REGT <- REGT %>%
   select(
     respondent_id,
     assessment_context_label,
@@ -96,10 +113,14 @@ REGT_1 <- REGT %>%
     calc_regt_gaf_symp_out = calc_MB_GAF_S_out_sum
   ) %>%
   mutate(
-    # parse dates (format: dd.mm.yy)
-    regt_admission_date = dmy(regt_admission_date),
-    regt_discharge_date = dmy(regt_discharge_date),
-
+    # parse i.e., "23.10.2019 13:14"
+    regt_admission_dt  = dmy_hm(regt_admission_date, tz = "UTC"),
+    regt_discharge_dt  = dmy_hm(regt_discharge_date, tz = "UTC"),
+    
+    # keep a Date version if you prefer date-only
+    regt_admission_date  = as_date(regt_admission_dt),
+    regt_discharge_date  = as_date(regt_discharge_dt),
+    
     # binary tags 
     regt_alcohol_drug_abuse_bin   = ifelse(regt_alcohol_drug_abuse == 1, 1, 0),
     
@@ -118,27 +139,10 @@ REGT_1 <- REGT %>%
     calc_regt_gaf_symp_change = calc_regt_gaf_symp_out - calc_regt_gaf_symp_in
   )
   
-# ---------------------------------------------------------
-# Filter for only participants that consented to having their data used
-# ---------------------------------------------------------
-
-consent <- consent %>%
-  select(respondent_id, consent)
-
-  # Merge only the 'consent' column with the REGT dataset by 'respondent_id'
-REGT <- merge(REGT, consent, 
-                    by = "respondent_id", 
-                    all = TRUE, 
-                    suffixes = c("", "_c"))
-  
-# Replace empty strings with NA only in character columns
-REGT  <- REGT  %>%
-  mutate(across(where(is.character), ~na_if(., '')))
 
 # ---------------------------------------------------------
 # Define variables for downstream analysis of complexity
 # ---------------------------------------------------------
-
 
   ## Define variables
 #1. Number of Diagnoses: The total count of diagnosed disorders (counts).
@@ -146,101 +150,80 @@ REGT  <- REGT  %>%
 #3. Additional Complexity: Presence of a personality disorder (binary; yes/no).
 #4. length of stay
 
-# Standardize ICD codes
+# ---------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------
 normalize_icd <- function(icd) {
   icd %>%
-    str_to_upper() %>% # Convert to uppercase
-    str_remove_all("[^A-Z0-9.]") %>% # Remove non-alphanumeric/non-dot characters
-    str_trim() # Trim whitespace
+    str_to_upper() %>%                 # uppercase
+    str_remove_all("[^A-Z0-9.]") %>%   # keep letters/digits/dot
+    str_trim()
 }
 
-# Clean and transform data
+# ---------------------------------------------------------
+# Define variables for downstream analysis
+# ---------------------------------------------------------
 REGT <- REGT %>%
-  # Normalize ICD codes
-  mutate(across(c(icd_primary, icd_bi_1, icd_bi_2, icd_bi_3), normalize_icd)) %>%
+  # standardize ICD code fields
+  mutate(across(c(regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3), normalize_icd)) %>%
   
-  # Create "Number of Diagnoses" as the count of non-missing ICD codes
-  mutate(number_of_diagnoses = case_when(
-    rowSums(is.na(select(., icd_primary, icd_bi_1, icd_bi_2, icd_bi_3))) == length(select(., icd_primary, icd_bi_1, icd_bi_2, icd_bi_3)) ~ NA_integer_,
-    TRUE ~ rowSums(!is.na(select(., icd_primary, icd_bi_1, icd_bi_2, icd_bi_3)) & select(., icd_primary, icd_bi_1, icd_bi_2, icd_bi_3) != "")
-  )) %>%
-  
-  # Create comorbidity for mood disorders
-  mutate(mood_disorder = if_else(grepl("F30|F31|F32|F33|F34|F38|F39", paste(icd_primary, icd_bi_1, icd_bi_2, icd_bi_3, sep = " "), ignore.case = TRUE), "yes", "no")) %>%
-  
-  # Create additional_complexity considering SCID interview and potential NA values
-  mutate(additional_complexity = case_when(
-    is.na(scid) ~ NA_character_,
-    scid == 1 & rowSums(select(., starts_with("scid_")) == 1, na.rm = TRUE) > 0 ~ "yes",
-    scid == 1 & rowSums(select(., starts_with("scid_")) == 1, na.rm = TRUE) == 0 ~ "no",
-    TRUE ~ "no" # Default case if SCID is not 1
-  ))
-
-#length of stay
-
-
-# keep only the newly defined variables and leave out the others
-# View first few rows of the cleaned data
-head(REGT)
-```
-# helper to standardize ICD codes
-normalize_icd <- function(icd) {
-  icd %>%
-    str_to_upper() %>% # Convert to uppercase
-    str_remove_all("[^A-Z0-9.]") %>% # Remove non-alphanumeric/non-dot characters
-    str_trim() # Trim whitespace
-}
-REGT <- REGT %>%
-  # Normalize ICD text 
-  mutate(
-    across(c(regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3), normalize_icd)
-  ) %>%
-  # Number of diagnoses (count non-missing/non-empty)
+  # number of diagnoses (count non-missing/non-empty ICDs)
   mutate(
     regt_number_of_diagnoses = {
       icds <- select(., regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3)
       rowSums(icds != "" & !is.na(icds))
     }
   ) %>%
-  # Mood disorder comorbidity flag (F3x codes anywhere)
+  
+  # mood disorder comorbidity (F30/31/32/33/34/38/39 anywhere)
   mutate(
     regt_mood_disorder = if_else(
-      str_detect(paste(regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3, sep = " "),
-                 "\\bF3(0|1|2|3|4|8|9)\\b"),
-      "yes", "no"
+      str_detect(
+        paste(regt_icd_primary, regt_icd_bi_1, regt_icd_bi_2, regt_icd_bi_3, sep = " "),
+        "\\bF3(0|1|2|3|4|8|9)\\b"
+      ),
+      1L, 0L   # integers, not characters
     )
   ) %>%
-  # Personality disorder complexity (needs SCID done + any PD true)
+  
+  # additional complexity: SCID interview done + any PD flagged
   mutate(
-    scid_any_pd = if_any(regt_scid_avoidant:regt_scid_other, ~ .x %in% TRUE),
     regt_additional_complexity = case_when(
-      is.na(regt_scid_done) ~ NA_character_,
-      regt_scid_done & scid_any_pd ~ "yes",
-      regt_scid_done & !scid_any_pd ~ "no",
-      TRUE ~ "no"
+      is.na(regt_scid_done) ~ NA_integer_,  # NA stays as integer
+      regt_scid_done & if_any(
+        starts_with("regt_scid_") & !matches("^regt_scid_done$"),
+        ~ .x %in% c(TRUE, 1)
+      ) ~ 1L,
+      regt_scid_done ~ 0L,
+      TRUE ~ 0L
     )
   ) %>%
-  # Length of stay (days); guard against NAs and negative values
+  
+  # length of stay (assumes regt_admission_date / regt_discharge_date already parsed)
   mutate(
     regt_length_of_stay_days = as.integer(regt_discharge_date - regt_admission_date),
     regt_length_of_stay_days = if_else(regt_length_of_stay_days < 0, NA_integer_, regt_length_of_stay_days)
   ) %>%
-  # Combined trauma flag
+  
+  # combined trauma flag (any childhood/adult trauma bin = 1)
   mutate(
     regt_trauma_any_bin = if_else(
-      rowSums(across(starts_with("regt_trauma_")), na.rm = TRUE) > 0,
+      rowSums(across(starts_with("regt_trauma_"), ~ replace_na(as.integer(.x), 0)), na.rm = TRUE) > 0,
       1L, 0L
     )
   ) %>%
-  # drop the helper before narrowing columns
-  select(-scid_any_pd) %>%
-  # keep just variables we will use later
+  
+  # keep only variables to use later
   select(
     respondent_id, assessment_context_label, treatment_id, treatment_name,
-    regt_length_of_stay_days,regt_number_of_diagnoses, regt_mood_disorder, 
-    regt_additional_complexity, starts_with("regt_trauma_"),
-    regt_alcohol_drug_abuse_bin, starts_with("calc_regt_gaf_")
+    regt_length_of_stay_days, regt_number_of_diagnoses, regt_mood_disorder, 
+    regt_additional_complexity, regt_trauma_any_bin, regt_alcohol_drug_abuse_bin,
+    calc_regt_gaf_symp_change, calc_regt_gaf_func_change
   )
+
+# ---------------------------------------------------------
+# Check
+# ---------------------------------------------------------
 
 # Check N
 print(summarize_patient_counts(REGT))
