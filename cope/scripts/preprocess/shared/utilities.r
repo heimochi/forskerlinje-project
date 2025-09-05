@@ -21,6 +21,10 @@ summarize_patient_counts <- function(dataset) {
   return(patient_counts)
 }
 
-# Example usage:
-# counts <- summarize_patient_counts(my_data)
-# print(counts)
+# Function: for proration
+#Description:
+
+score_prorate <- function(sum, n_answered, n_total, min_prop = 0.7) {
+  ok <- n_answered / n_total >= min_prop
+  ifelse(ok, (sum / pmax(n_answered, 1)) * n_total, NA_real_)
+}

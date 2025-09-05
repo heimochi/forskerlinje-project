@@ -31,26 +31,29 @@ ATQ <- ATQ %>%
     `treatment id`,
     `treatment name`,
     `treatment type id`,
-    starts_with("calc")
+    `calculation:MODUMBAD-ATQ-SUM`,   # total sum
+    `calculation:MODUMBAD-ATQ-AA`     # items answered
   ) %>%
   rename(
-    respondent_id              = `respondent id`,
-    assessment_context_label   = `assessment instance context label`,
-    treatment_id               = `treatment id`,
-    treatment_name             = `treatment name`,
-    treatment_type_id          = `treatment type id`,
-    
-    # Calculated scores
-    calc_atq_aa               = `calculation:MODUMBAD-ATQ-AA`,
-    calc_atq_pan_aa           = `calculation:MODUMBAD-ATQ-PAN-AA`,
-    calc_atq_pan_sum          = `calculation:MODUMBAD-ATQ-PAN-SUM`,
-    calc_atq_ptsd_aa          = `calculation:MODUMBAD-ATQ-PTSD-AA`,
-    calc_atq_ptsd_sum         = `calculation:MODUMBAD-ATQ-PTSD-SUM`,
-    calc_atq_sos_aa           = `calculation:MODUMBAD-ATQ-SOS-AA`,
-    calc_atq_sos_sum          = `calculation:MODUMBAD-ATQ-SOS-SUM`,
-    calc_atq_total_sum        = `calculation:MODUMBAD-ATQ-SUM`
+    respondent_id            = `respondent id`,
+    assessment_context_label = `assessment instance context label`,
+    treatment_id             = `treatment id`,
+    treatment_name           = `treatment name`,
+    treatment_type_id        = `treatment type id`,
+    atq_sum                = `calculation:MODUMBAD-ATQ-SUM`,
+    atq_items_answered     = `calculation:MODUMBAD-ATQ-AA`
   )
 
+#keep only those with >70% items answered 
+  score_prorate <- function(sum, n_answered, n_total = 23, min_prop = 0.7) {
+  ok <- n_answered / n_total >= min_prop
+  ifelse(ok, (sum / pmax(n_answered, 1)) * n_total, NA_real_)
+}
+
+ATQ <- ATQ %>%
+  mutate(atq_sum_prorated = score_prorate(atq_sum, atq_items_answered))
+
+ATQ <- ATQ %>% select(-atq_items_answered)
 
 # ---------------------------------------------------------
 # Filter for only participants that consented to having their data used
@@ -59,11 +62,15 @@ ATQ <- ATQ %>%
 consent <- consent %>%
   select(respondent_id, consent)
 
-  # Merge only the 'consent' column with the ATQ dataset by 'respondent_id'
-ATQ <- merge(ATQ, consent, 
-                    by = "respondent_id", 
-                    all = TRUE, 
-                    suffixes = c("", "_c"))
+# valid ids = consent 1 or NA
+valid_ids <- consent %>%
+  mutate(consent = as.integer(consent)) %>%
+  filter(is.na(consent) | consent == 1L) %>%
+  distinct(respondent_id)
+
+# keep only those ATQ rows
+ATQ <- ATQ %>%
+  semi_join(valid_ids, by = "respondent_id")        #2803 obs. of 9 variables
   
 
 # Replace empty strings with NA only in character columns

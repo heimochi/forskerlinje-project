@@ -70,10 +70,15 @@ consent <- consent %>%
   select(respondent_id, consent)
 
   # Merge only the 'consent' column with the REGP dataset by 'respondent_id'
-REGP <- merge(REGP, consent, 
-                    by = "respondent_id", 
-                    all = TRUE, 
-                    suffixes = c("", "_c"))
+# valid ids = consent 1 or NA
+valid_ids <- consent %>%
+  mutate(consent = as.integer(consent)) %>%
+  filter(is.na(consent) | consent == 1L) %>%
+  distinct(respondent_id)
+
+# keep only those REGP rows
+REGP <- REGP %>%                                                        # 429 obs. of 23 variables
+  semi_join(valid_ids, by = "respondent_id")
   
 
 # Replace empty strings with NA only in character columns
@@ -94,7 +99,7 @@ REGP  <- REGP  %>%
    regp_partner,             
    regp_prev_outpatient,     
    regp_prev_inpatient
-  )
+  )                                                                     #429 obs. of 11 variables 
 
 # Check N
 print(summarize_patient_counts(REGP))
