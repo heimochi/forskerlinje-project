@@ -8,3 +8,4 @@ scripts/preprocess/pswq/00_load_data.r
 scripts/preprocess/regp/00_load_data.r
 scripts/preprocess/regt/00_load_data.r
 scripts/preprocess/scl/00_load_data.r
+scripts/preprocess/shared/00_consent.r
