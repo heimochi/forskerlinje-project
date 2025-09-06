@@ -15,7 +15,7 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # PSWQ Assessment data
-PSWQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/PSWQavid.xls")
+PSWQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/PSWQavid.xls")     # 2,729 
 
 # Consent data
 consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
@@ -41,7 +41,6 @@ PSWQ <- PSWQ %>%
     respondent_id            = `respondent id`,
 
     # Calculated scores
-    calc_pswq_total_aa        = `calculation:PSWQ-ALL-AA`,
     calc_pswq_total_sum       = `calculation:PSWQ-ALL-SUM`
   )
 

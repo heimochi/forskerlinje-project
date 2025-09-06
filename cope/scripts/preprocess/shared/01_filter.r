@@ -5,12 +5,12 @@
 # Description: Standardized filtering for instruments (e.g., ATQ, BAI, etc.)
 # ---------------------------------------------------------
 
-# Required Libraries
 library(dplyr)
 
 # ---------------------------------------------------------
 # Function: filter_instrument()
 # Filters and filters input instrument data based on:
+# - Consent
 # - Department filtering
 # - Context label recoding (Assessment, Admission, Post-Treatment)
 # - Treatment name standardization (Remove Boosters)

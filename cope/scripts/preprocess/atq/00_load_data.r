@@ -23,6 +23,7 @@ consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon
 # ---------------------------------------------------------
 # Rename n select ATQ column names for consistency
 # ---------------------------------------------------------
+#reminder helper in utilities 
 
 ATQ <- ATQ %>%
   select(
@@ -42,40 +43,18 @@ ATQ <- ATQ %>%
     treatment_type_id        = `treatment type id`,
     atq_sum                = `calculation:MODUMBAD-ATQ-SUM`,
     atq_items_answered     = `calculation:MODUMBAD-ATQ-AA`
+  ) %>%
+  mutate(
+    atq_sum_prorated = score_prorate(atq_sum, atq_items_answered, n_total = 23, min_prop = 0.70)
+  ) %>%
+  # keep only those with ≥70% items answered
+  filter(atq_items_answered / 23 >= 0.70) %>%
+  select(
+    respondent_id, assessment_context_label,
+    treatment_id, treatment_name, treatment_type_id,
+    atq_sum, atq_sum_prorated
   )
 
-#keep only those with >70% items answered 
-  score_prorate <- function(sum, n_answered, n_total = 23, min_prop = 0.7) {
-  ok <- n_answered / n_total >= min_prop
-  ifelse(ok, (sum / pmax(n_answered, 1)) * n_total, NA_real_)
-}
-
-ATQ <- ATQ %>%
-  mutate(atq_sum_prorated = score_prorate(atq_sum, atq_items_answered))
-
-ATQ <- ATQ %>% select(-atq_items_answered)
-
-# ---------------------------------------------------------
-# Filter for only participants that consented to having their data used
-# ---------------------------------------------------------
-
-consent <- consent %>%
-  select(respondent_id, consent)
-
-# valid ids = consent 1 or NA
-valid_ids <- consent %>%
-  mutate(consent = as.integer(consent)) %>%
-  filter(is.na(consent) | consent == 1L) %>%
-  distinct(respondent_id)
-
-# keep only those ATQ rows
-ATQ <- ATQ %>%
-  semi_join(valid_ids, by = "respondent_id")        #2803 obs. of 9 variables
-  
-
-# Replace empty strings with NA only in character columns
-ATQ  <- ATQ  %>%
-  mutate(across(where(is.character), ~na_if(., '')))
 
 # Check N
 print(summarize_patient_counts(ATQ ))

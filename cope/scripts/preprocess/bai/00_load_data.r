@@ -30,17 +30,14 @@ BAI <- BAI %>%
     any_of(c("calc_ans", "calc_tot"))
   ) %>%
   rename(
-    calc_bai_items_answered = calc_ans,
-    bai_sum                 = calc_tot
+    bai_items_answered = calc_ans,
+    bai_sum            = calc_tot
   ) %>%
   mutate(
-    # prorate to the full 21 items when ≥70% answered
-     bai_sum_prorated = if_else(
-       calc_bai_items_answered / 21 >= 0.7,
-       (bai_sum / pmax(calc_bai_items_answered, 1)) * 21,
-       NA_real_
-     )
+    bai_sum_prorated = score_prorate(bai_sum, bai_items_answered, n_total = 21, min_prop = 0.70)
   ) %>%
+  # keep only those with ≥70% items answered (remove this line if you want to keep all rows)
+  filter(bai_items_answered / 21 >= 0.70) %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,

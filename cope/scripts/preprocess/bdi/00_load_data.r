@@ -26,12 +26,11 @@ consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon
 
 #reminder that helper is in utilities!
 
-# define item sets
+# define item sets (cognitive affective vs somatic affective)
 CA_items <- c("Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q12","Q13","Q14")  # 12 items
 SA_items <- c("Q10","Q11","Q15","Q16","Q17","Q18","Q19","Q20","Q21")           # 9 items
 
 BDI <- BDI %>%
-  # keep the columns you need; your IDs have spaces, so quote them
   select(
     `respondent id`, `assessment instance context label`,
     `treatment id`, `treatment name`, `treatment type id`,
@@ -71,13 +70,16 @@ BDI <- BDI %>%
 consent <- consent %>%
   select(respondent_id, consent)
 
-  # Merge only the 'consent' column with the BDI dataset by 'respondent_id'
-BDI <- merge(BDI, consent, 
-                    by = "respondent_id", 
-                    all = TRUE, 
-                    suffixes = c("", "_c"))
-  
+# valid ids = consent 1 or NA
+valid_ids <- consent %>%
+  mutate(consent = as.integer(consent)) %>%
+  filter(is.na(consent) | consent == 1L) %>%
+  distinct(respondent_id)
 
+# keep only those rows
+BDI <- BDI %>%
+  semi_join(valid_ids, by = "respondent_id")        #2803 obs. of 9 variables
+  
 # Replace empty strings with NA only in character columns
 BDI  <- BDI  %>%
   mutate(across(where(is.character), ~na_if(., '')))
