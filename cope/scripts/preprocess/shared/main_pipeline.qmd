@@ -7,19 +7,22 @@ execute:
 ---
 
 ```{r setup}
-# Load functions
-source("cope/scripts/preprocess/shared/utilities.r") #small helpers
-source("cope/scripts/preprocess/shared/01_filter.r") #filter_clinical_data
+source("preprocess/shared/utilities.r") #small helpers
+source("preprocess/shared/00_consent.R") # load_consent()
+source("preprocess/shared/01_filter.r") # filter_clinical_data()
 ```
 
 ```{r}
-source("cope/scripts/preprocess/atq/00_load_data.r")
-# Set working data
-data <- ATQ
-# filter using function
-data <- filter_clinical_data(data)
-print(summarize_patient_counts(data))
-data <- 
+# load consent
+consent <- load_consent()
+
+#| label: preprocess-atq-only
+source("preprocess/atq/00_load_data.r")  # creates ATQ
+ATQ <- filter_clinical_data(ATQ, consent_df = consent)
+
+
+
+
 
 source("cope/scripts/preprocess/shared/02_data_types.r")
 
@@ -31,9 +34,17 @@ write.csv(data, "outputs/atq_f.csv", row.names = FALSE)
 
 ```
 
-?? wrap each questionnaire in a function for automation: would b cool
 
+
+
+
+
+?? wrap each questionnaire in a function for automation: would b cool
 ```{r}
+# instruments
+qes <- c("atq", "bai", "bdi", "iip", "mcq", "pswq", "regp", "regt", "scl")
+
+
 run_pipeline <- function(q_name, load_path, score_script, output_name) {
   source(load_path)
   data <- get(q_name)

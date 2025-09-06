@@ -17,9 +17,6 @@ library(dplyr)      # for data manipulation
 # ATQ Assessment data
 ATQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/ATQ_avid.xls")  # 3710 obs. of 57 variables
 
-# Consent data
-consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv")  # 5901 obs. of 30 variables
-
 # ---------------------------------------------------------
 # Rename n select ATQ column names for consistency
 # ---------------------------------------------------------
@@ -55,6 +52,5 @@ ATQ <- ATQ %>%
     atq_sum, atq_sum_prorated
   )
 
-
 # Check N
-print(summarize_patient_counts(ATQ ))
+print(summarize_patient_counts(ATQ))

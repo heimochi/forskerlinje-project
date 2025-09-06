@@ -6,7 +6,7 @@ load_consent <- function(csv_path = "/Users/maggieheimvik/Desktop/COPE/data/data
 
   read_csv(csv_path, show_col_types = FALSE) %>%
     clean_names() %>%                                        # makes respondent_id, consent
-    rename(respondent_id = any_of(c("respondent_id","respondent.id"))) %>%
+    rename(respondent_id = any_of(c("respondent_id","respondent.id", "respondent id"))) %>%
     select(respondent_id, consent) %>%
     mutate(                                                  # map to 1/0/NA robustly
       consent = case_when(

@@ -62,27 +62,5 @@ BDI <- BDI %>%
     bdi_ca_sum, bdi_sa_sum, bdi_ca_sum_prorated, bdi_sa_sum_prorated
   )
 
-
-# ---------------------------------------------------------
-# Filter for only participants that consented to having their data used
-# ---------------------------------------------------------
-
-consent <- consent %>%
-  select(respondent_id, consent)
-
-# valid ids = consent 1 or NA
-valid_ids <- consent %>%
-  mutate(consent = as.integer(consent)) %>%
-  filter(is.na(consent) | consent == 1L) %>%
-  distinct(respondent_id)
-
-# keep only those rows
-BDI <- BDI %>%
-  semi_join(valid_ids, by = "respondent_id")        #2803 obs. of 9 variables
-  
-# Replace empty strings with NA only in character columns
-BDI  <- BDI  %>%
-  mutate(across(where(is.character), ~na_if(., '')))
-
 # Check N
 print(summarize_patient_counts(BDI))
