@@ -1,5 +1,5 @@
 # ---------------------------------------------------------
-# Load IIP Data and Consent
+# Load IIP Data
 # Author: MochiBear.Hei
 # Created: 2025-08-22
 # Description: Loads raw IIP assessment data and consent records.
@@ -73,7 +73,7 @@ IIP <- IIP %>%
     treatment_id,
     treatment_name,
     treatment_type_id,
-
+    
     # raw + prorated
     iip_pa, iip_pa_prorated,
     iip_bc, iip_bc_prorated,
