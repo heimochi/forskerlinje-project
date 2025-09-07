@@ -17,11 +17,8 @@ source("preprocess/shared/01_filter.r") # filter_clinical_data()
 consent <- load_consent()
 
 #| label: preprocess-atq-only
-source("preprocess/atq/00_load_data.r")  # creates ATQ
-ATQ <- filter_clinical_data(ATQ, consent_df = consent)
-
-
-
+source("preprocess/bai/00_load_data.r")  # creates ATQ
+IIP <- filter_clinical_data(IIP, consent_df = consent)
 
 
 source("cope/scripts/preprocess/shared/02_data_types.r")

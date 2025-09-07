@@ -2,7 +2,6 @@
 # Utility Functions for Preprocessing
 # Author: mochibear
 # ---------------------------
-library(dplyr)
 
 # ---------------------------------------------------------
 # Function: summarize_patient_counts
@@ -12,16 +11,22 @@ library(dplyr)
 # ---------------------------------------------------------
 
 summarize_patient_counts <- function(dataset) {
-  
-  # Summarize the count of patients for each assessment context label
-  patient_counts <- dataset %>%
-    group_by(assessment_context_label) %>%
-    summarize(
-      patient_count = n_distinct(respondent_id),
-      .groups = 'drop' # To ungroup after summarization
+  by_ctx <- dataset %>%
+    dplyr::group_by(assessment_context_label) %>%
+    dplyr::summarise(
+      patient_count = dplyr::n_distinct(respondent_id),
+      .groups = "drop"
     )
-  
-  return(patient_counts)
+
+  total_unique <- dplyr::n_distinct(dataset$respondent_id)
+
+  dplyr::bind_rows(
+    by_ctx,
+    tibble::tibble(
+      assessment_context_label = "TOTAL (unique patients)",
+      patient_count = total_unique
+    )
+  )
 }
 
 # ---------------------------------------------------------
@@ -29,17 +34,20 @@ summarize_patient_counts <- function(dataset) {
 # Description:
 #   to use summarize_patient_counts within functions n pipes
 # ---------------------------------------------------------
+
 peek_counts <- function(df, label = NULL) {
   out <- summarize_patient_counts(df)
+
   if (isTRUE(getOption("knitr.in.progress"))) {
-    # In Quarto/knitr: keep label attached to the table
-    print(knitr::kable(out, caption = paste("Step:", label)))
+    # When knitting (Quarto/knitr): attach the label as a caption and show all rows
+    print(knitr::kable(out, caption = paste("Step:", label %||% "")))
   } else {
-    # In the R console: this is fine
-    if (!is.null(label)) cat("\n---", label, "---\n")
-    print(out)
+    # In the console: print label + ALL rows/columns
+    if (!is.null(label)) cat("\n--- ", label, " ---\n", sep = "")
+    print(out, n = Inf, width = Inf)
   }
-  df  # pass-through
+
+  df  # pass-through 
 }
 
 # ---------------------------------------------------------

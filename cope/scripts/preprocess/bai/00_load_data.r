@@ -43,4 +43,4 @@ BAI <- BAI %>%
   )
 
 # Check N
-print(summarize_patient_counts(BAI))
+print(summarize_patient_counts(BAI), n = Inf, width = Inf)
