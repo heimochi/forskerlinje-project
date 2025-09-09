@@ -140,14 +140,16 @@ REGP <- REGP %>%
     regp_work_pastyear_bin,
     regp_work_current_bin,
     regp_prev_outpt_bin,
-    regp_prev_inpt_bin
+    regp_prev_inpt_bin,
+    symptom_duration_bin
   )
 
 #Quality control
 summary(REGP[c("age_at_admission","regp_sickleave_bin","symptom_duration_bin")])
 sapply(REGP, function(x) sum(is.na(x)))
 
-# I dropped Sick leave (Q8) → ~20% missing and Symptom duration (Q16) → ~18% missing
+# I dropped Sick leave (Q8) → ~20% missing 
+# Symptom duration (Q16) → ~18% missing but i have to keep it in for now 
 
 # Check N
 print(summarize_patient_counts(REGP))
