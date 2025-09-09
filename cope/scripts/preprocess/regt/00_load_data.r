@@ -138,7 +138,6 @@ REGT <- REGT %>%
     calc_regt_gaf_func_change = calc_regt_gaf_func_out - calc_regt_gaf_func_in,
     calc_regt_gaf_symp_change = calc_regt_gaf_symp_out - calc_regt_gaf_symp_in
   )
-  
 
 # ---------------------------------------------------------
 # Define variables for downstream analysis of complexity
@@ -212,7 +211,6 @@ REGT <- REGT %>%
       1L, 0L
     )
   ) %>%
-  
   # keep only variables to use later
   select(
     respondent_id, assessment_context_label, treatment_id, treatment_name,
@@ -221,9 +219,6 @@ REGT <- REGT %>%
     calc_regt_gaf_symp_change, calc_regt_gaf_func_change
   )
 
-# ---------------------------------------------------------
-# Check
-# ---------------------------------------------------------
 
 # Check N
 print(summarize_patient_counts(REGT))

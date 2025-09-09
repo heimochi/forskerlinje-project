@@ -10,15 +10,14 @@ execute:
 source("preprocess/shared/utilities.r") #small helpers
 source("preprocess/shared/00_consent.R") # load_consent()
 source("preprocess/shared/01_filter.r") # filter_clinical_data()
+# load consent
+consent <- load_consent()
 ```
 
 ```{r}
-# load consent
-consent <- load_consent()
-
 #| label: preprocess-atq-only
 source("preprocess/bai/00_load_data.r")  # creates ATQ
-MCQ <- filter_clinical_data(MCQ, consent_df = consent)
+PSWQ <- filter_clinical_data(PSWQ, consent_df = consent)
 
 
 source("cope/scripts/preprocess/shared/02_data_types.r")
