@@ -1,14 +1,12 @@
 # ---------------------------------------------------------
-# Load MCQ Data and Consent
+# Load MCQ Data
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw MCQ assessment data and consent records.
+# Description: Loads raw MCQ assessment data
 # ---------------------------------------------------------
 
-# Libraries
-library(readxl)     # for reading Excel files
-library(readr)      # for reading CSV files
-library(dplyr)      # for data manipulation
+library(readxl)
+library(dplyr)
 
 # ---------------------------------------------------------
 # Load raw data
@@ -68,24 +66,48 @@ MCQ <- MCQ %>%
     mcq_total_aa = `calculation:MCQ-30-Total-AA`
   ) %>%
   mutate(
-    # prorated subs (each has 6 items)
-    mcq_cc_prorated  = if_else(mcq_cc_aa/6 >= 0.70, score_prorate(mcq_cc, mcq_cc_aa, n_total = 6), NA_real_),
-    mcq_pos_prorated = if_else(mcq_pos_aa/6 >= 0.70, score_prorate(mcq_pos, mcq_pos_aa, n_total = 6), NA_real_),
-    mcq_csc_prorated = if_else(mcq_csc_aa/6 >= 0.70, score_prorate(mcq_csc, mcq_csc_aa, n_total = 6), NA_real_),
-    mcq_neg_prorated = if_else(mcq_neg_aa/6 >= 0.70, score_prorate(mcq_neg, mcq_neg_aa, n_total = 6), NA_real_),
-    mcq_nc_prorated  = if_else(mcq_nc_aa/6 >= 0.70, score_prorate(mcq_nc, mcq_nc_aa, n_total = 6), NA_real_),
+  # prorated subs (each has 6 items)
+  mcq_cc_prorated = if_else(
+    mcq_cc_aa / 6 >= 0.70,
+    score_prorate(mcq_cc, mcq_cc_aa, n_total = 6),
+    NA_real_
+  ),
+  mcq_pos_prorated = if_else(
+    mcq_pos_aa / 6 >= 0.70,
+    score_prorate(mcq_pos, mcq_pos_aa, n_total = 6),
+    NA_real_
+  ),
+  mcq_csc_prorated = if_else(
+    mcq_csc_aa / 6 >= 0.70,
+    score_prorate(mcq_csc, mcq_csc_aa, n_total = 6),
+    NA_real_
+  ),
+  mcq_neg_prorated = if_else(
+    mcq_neg_aa / 6 >= 0.70,
+    score_prorate(mcq_neg, mcq_neg_aa, n_total = 6),
+    NA_real_
+  ),
+  mcq_nc_prorated = if_else(
+    mcq_nc_aa / 6 >= 0.70,
+    score_prorate(mcq_nc, mcq_nc_aa, n_total = 6),
+    NA_real_
+  ),
 
-    # total has 30 items
-    mcq_total_prorated = if_else(mcq_total_aa/30 >= 0.70, score_prorate(mcq_total, mcq_total_aa, n_total = 30), NA_real_)
-  ) %>%
+  # total has 30 items
+  mcq_total_prorated = if_else(
+    mcq_total_aa / 30 >= 0.70,
+    score_prorate(mcq_total, mcq_total_aa, n_total = 30),
+    NA_real_
+  )
+) %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    mcq_cc, mcq_cc_prorated,
-    mcq_pos, mcq_pos_prorated,
-    mcq_csc, mcq_csc_prorated,
-    mcq_neg, mcq_neg_prorated,
-    mcq_nc, mcq_nc_prorated
+    mcq_cc_prorated,
+    mcq_pos_prorated,
+    mcq_csc_prorated,
+    mcq_neg_prorated,
+    mcq_nc_prorated
   )
 
   # Quality Control

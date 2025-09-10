@@ -1,14 +1,12 @@
 # ---------------------------------------------------------
-# Load BAI Data and Consent
+# Load BAI Data
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw BAI assessment data and consent records.
+# Description: Loads raw BAI assessment data
 # ---------------------------------------------------------
 
-# Libraries
-library(readxl)     # for reading Excel files
-library(readr)      # for reading CSV files
-library(dplyr)      # for data manipulation
+library(readr)
+library(dplyr)
 
 # ---------------------------------------------------------
 # Load raw data
@@ -31,10 +29,14 @@ BAI <- BAI %>%
     bai_items_answered = calc_ans,
     bai_sum            = calc_tot
   ) %>%
-  mutate(
-    bai_sum_prorated = score_prorate(bai_sum, bai_items_answered, n_total = 21, min_prop = 0.70)
+mutate(
+  bai_sum_prorated = score_prorate(
+    bai_sum,
+    bai_items_answered,
+    n_total = 21,
+    min_prop = 0.70
   ) %>%
-  # keep only those with ≥70% items answered (remove this line if you want to keep all rows)
+  # keep only those with ≥70% items answered
   filter(bai_items_answered / 21 >= 0.70) %>%
   select(
     respondent_id, assessment_context_label,

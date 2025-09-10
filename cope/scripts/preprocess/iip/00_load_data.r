@@ -2,19 +2,17 @@
 # Load IIP Data
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw IIP assessment data and consent records.
+# Description: Loads raw IIP assessment data
 # ---------------------------------------------------------
 
-# Libraries
 library(readxl)
-library(readr)
 library(dplyr)
 
 # ---------------------------------------------------------
 # Load raw data
 # ---------------------------------------------------------
 
-IIP <- read_excel(file.path(data_dir, "IIP64_avid.xls")) #13646 obs of 144 var. 
+IIP <- read_excel(file.path(data_dir, "IIP64_avid.xls")) #13646 obs of 144 var.
 
 # ---------------------------------------------------------
 # Rename n select IIP column names for consistency
@@ -82,12 +80,28 @@ IIP <- IIP %>%
     iip_lm_t = if_else(iip_lm_aa >= 6, iip_lm_t, NA_real_),
     iip_no_t = if_else(iip_no_aa >= 6, iip_no_t, NA_real_)
   ) %>%
-  # basic sanity cap for T-scores (expected ~20–100)
-  mutate(across(ends_with("_t"), ~ ifelse(!is.na(.x) & (.x < 20 | .x > 100), NA_real_, .x))) %>%
-  select(
-    respondent_id, assessment_context_label, treatment_id, treatment_name, treatment_type_id,
-    iip_pa_t, iip_bc_t, iip_de_t, iip_fg_t, iip_hi_t, iip_jk_t, iip_lm_t, iip_no_t
+# basic sanity cap for T-scores (expected ~20–100)
+mutate(
+  across(
+    ends_with("_t"),
+    ~ ifelse(!is.na(.x) & (.x < 20 | .x > 100), NA_real_, .x)
   )
+) %>%
+select(
+  respondent_id,
+  assessment_context_label,
+  treatment_id,
+  treatment_name,
+  treatment_type_id,
+  iip_pa_t,
+  iip_bc_t,
+  iip_de_t,
+  iip_fg_t,
+  iip_hi_t,
+  iip_jk_t,
+  iip_lm_t,
+  iip_no_t
+)
 
   # Quality Control
 sapply(IIP, function(x) sum(is.na(x)))

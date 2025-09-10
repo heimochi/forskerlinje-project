@@ -1,14 +1,12 @@
 # ---------------------------------------------------------
-# Load Symptom Checklist 90 Data and Consent
+# Load Symptom Checklist 90 Data
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw SCL assessment data and consent records.
+# Description: Loads raw SCL assessment data
 # ---------------------------------------------------------
 
-# Libraries
-library(readxl)     # for reading Excel files
-library(readr)      # for reading CSV files
-library(dplyr)      # for data manipulation
+library(readr)
+library(dplyr)
 
 # ---------------------------------------------------------
 # Load raw data
@@ -21,7 +19,6 @@ SCL<- read_csv2(file.path(data_dir, "SCL90.csv"))  #2081 obs of 1 variable
 # Rename n select SCL column names for consistency
 # ---------------------------------------------------------
 SCL <- SCL %>%
-  # keep IDs, treatment, gender, and only the T-score columns we need
   select(
     respondent.id,
     assessment.instance.context.label,
@@ -71,37 +68,84 @@ SCL <- SCL %>%
       scl_gender == "male"   ~ calculation.PST.T.Male,
       TRUE ~ NA_real_
     ),
-    
-    # dimensions
-    calc_scl_anxiety_t        = if_else(scl_gender == "female", calculation.Angst.T.Female,           calculation.Angst.T.Male,           missing = NA_real_),
-    calc_scl_depression_t     = if_else(scl_gender == "female", calculation.Depresjon.T.Female,       calculation.Depresjon.T.Male,       missing = NA_real_),
-    calc_scl_hostility_t      = if_else(scl_gender == "female", calculation.Fiendtlighet.T.Female,    calculation.Fiendtlighet.T.Male,    missing = NA_real_),
-    calc_scl_phobic_t         = if_else(scl_gender == "female", calculation.Fobisk.T.Female,          calculation.Fobisk.T.Male,          missing = NA_real_),
-    calc_scl_interpersonal_t  = if_else(scl_gender == "female", calculation.Interpersonlig.T.Female,  calculation.Interpersonlig.T.Male,  missing = NA_real_),
-    calc_scl_paranoid_t       = if_else(scl_gender == "female", calculation.Paranoid.T.Female,        calculation.Paranoid.T.Male,        missing = NA_real_),
-    calc_scl_psychoticism_t   = if_else(scl_gender == "female", calculation.Psykotisisme.T.Female,    calculation.Psykotisisme.T.Male,    missing = NA_real_),
-    calc_scl_somatization_t   = if_else(scl_gender == "female", calculation.Somatisering.T.Female,    calculation.Somatisering.T.Male,    missing = NA_real_),
-    calc_scl_ocd_t            = if_else(scl_gender == "female", calculation.Tvangssymptomer.T.Female, calculation.Tvangssymptomer.T.Male, missing = NA_real_)
-  ) %>%
+# dimensions
+calc_scl_anxiety_t = if_else(
+  scl_gender == "female",
+  calculation.Angst.T.Female,
+  calculation.Angst.T.Male,
+  missing = NA_real_
+),
+calc_scl_depression_t = if_else(
+  scl_gender == "female",
+  calculation.Depresjon.T.Female,
+  calculation.Depresjon.T.Male,
+  missing = NA_real_
+),
+calc_scl_hostility_t = if_else(
+  scl_gender == "female",
+  calculation.Fiendtlighet.T.Female,
+  calculation.Fiendtlighet.T.Male,
+  missing = NA_real_
+),
+calc_scl_phobic_t = if_else(
+  scl_gender == "female",
+  calculation.Fobisk.T.Female,
+  calculation.Fobisk.T.Male,
+  missing = NA_real_
+),
+calc_scl_interpersonal_t = if_else(
+  scl_gender == "female",
+  calculation.Interpersonlig.T.Female,
+  calculation.Interpersonlig.T.Male,
+  missing = NA_real_
+),
+calc_scl_paranoid_t = if_else(
+  scl_gender == "female",
+  calculation.Paranoid.T.Female,
+  calculation.Paranoid.T.Male,
+  missing = NA_real_
+),
+calc_scl_psychoticism_t = if_else(
+  scl_gender == "female",
+  calculation.Psykotisisme.T.Female,
+  calculation.Psykotisisme.T.Male,
+  missing = NA_real_
+),
+calc_scl_somatization_t = if_else(
+  scl_gender == "female",
+  calculation.Somatisering.T.Female,
+  calculation.Somatisering.T.Male,
+  missing = NA_real_
+),
+calc_scl_ocd_t = if_else(
+  scl_gender == "female",
+  calculation.Tvangssymptomer.T.Female,
+  calculation.Tvangssymptomer.T.Male,
+  missing = NA_real_
+)
+)  %>%
   # final tidy set: IDs + one T per scale
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
     calc_scl_gsi_t, calc_scl_gsi_valid = calculation.GSI.Valid,
     calc_scl_psdi_t, calc_scl_pst_t,
-    calc_scl_anxiety_t, calc_scl_depression_t, calc_scl_hostility_t, calc_scl_phobic_t,
-    calc_scl_interpersonal_t, calc_scl_paranoid_t, calc_scl_psychoticism_t,
-    calc_scl_somatization_t, calc_scl_ocd_t
+    calc_scl_anxiety_t, calc_scl_depression_t, calc_scl_hostility_t,
+    calc_scl_phobic_t, calc_scl_interpersonal_t, calc_scl_paranoid_t, 
+    calc_scl_psychoticism_t, calc_scl_somatization_t, calc_scl_ocd_t
   )
 
 # Keep only those where scl is valid
 SCL <- SCL %>%
-  filter(as.integer(calc_scl_gsi_valid) == 1L)  %>%    # 2070 obs. of 18 variables 
-  select(-calc_scl_gsi_valid, -calc_scl_gsi_t)    
-                        # remove the column
+  filter(as.integer(calc_scl_gsi_valid) == 1L)  %>%
+#2070 obs. of 18 variables 
+  select(-calc_scl_gsi_valid, -calc_scl_gsi_t)  # remove the column
+
 # Quality Control
 sapply(SCL, function(x) sum(is.na(x)))
 summary(SCL)
+# used modum derived t scores because the raw scores were not falling in the 
+#plausable range, not sure why
 
 # Check N
 print(summarize_patient_counts(SCL))

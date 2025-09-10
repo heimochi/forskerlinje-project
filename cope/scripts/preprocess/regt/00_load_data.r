@@ -1,25 +1,23 @@
 # ---------------------------------------------------------
-# Load Therapist Registration Data and Consent
+# Load Therapist Registration Data
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw REGT assessment data and consent records.
+# Description: Loads raw REGT assessment data and define complexity
 # ---------------------------------------------------------
 
-# Libraries
-  library(dplyr)
-  library(stringr)
-  library(tidyr)
+library(readr)
+library(dplyr)
+library(stringr)
+
 # ---------------------------------------------------------
 # Load raw data
 # ---------------------------------------------------------
-
 # REGP Assessment data
 REGT <- read_csv(file.path(data_dir, "reg_t_a.csv")) # 242 obs. of 30 var
 
 # ---------------------------------------------------------
 # Rename n select REGP column names for consistency
 # ---------------------------------------------------------
-
 # helper: normalize ICD codes (uppercase, keep A–Z/0–9/dot, trim; blanks -> NA)
 normalize_icd <- function(x) {
   x %>%
@@ -31,7 +29,6 @@ normalize_icd <- function(x) {
 }
 
 REGT <- REGT %>%
-  # keep only what we need
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id, treatment_type_name,
@@ -86,8 +83,7 @@ REGT <- REGT %>%
 # Quality Control
 sapply(REGT, function(x) sum(is.na(x)))
 summary(REGT)
-
-#code treats NA in PD and MD as no due to missing 221 in PD 16 in MD
+# code treats NA in PD and MD as no due to missing 221 in PD 16 in MD
 
 # Check N
 print(summarize_patient_counts(REGT))
