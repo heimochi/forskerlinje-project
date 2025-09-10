@@ -35,6 +35,7 @@ mutate(
     bai_items_answered,
     n_total = 21,
     min_prop = 0.70
+    )
   ) %>%
   # keep only those with ≥70% items answered
   filter(bai_items_answered / 21 >= 0.70) %>%
