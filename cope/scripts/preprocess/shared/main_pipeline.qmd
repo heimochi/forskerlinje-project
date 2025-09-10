@@ -11,47 +11,38 @@ source("preprocess/shared/path.r") #data_dir
 source("preprocess/shared/utilities.r") #small helpers
 source("preprocess/shared/00_consent.R") # load_consent()
 source("preprocess/shared/01_filter.r") # filter_clinical_data()
+source("preprocess/shared/02_data_types.r") # data_types(), check_types()
+```
 
+```{r}
 consent <- load_consent()
-```
+qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL") #regp not a part yet 
 
-```{r}
-#| label: preprocess-atq-only
-source("preprocess/bai/00_load_data.r")  # creates ATQ
-SCL <- filter_clinical_data(SCL, consent_df = consent)
-
-
-source("cope/scripts/preprocess/shared/02_data_types.r")
-
-source("cope/scripts/preprocess/shared/03_handle_missing.r")
-
-source("cope/scripts/preprocess/atq/04_score_atq.r")
-
-write.csv(data, "outputs/atq_f.csv", row.names = FALSE)
-
-```
-
-
-
-
-
-
-?? wrap each questionnaire in a function for automation: would b cool
-```{r}
-# instruments
-qes <- c("atq", "bai", "bdi", "iip", "mcq", "pswq", "regp", "regt", "scl")
-
-
-run_pipeline <- function(q_name, load_path, score_script, output_name) {
+run_pipeline <- function(q_name, load_path) {
   source(load_path)
   data <- get(q_name)
-  source("scripts/shared/01_merge_consent.R")
-  source("scripts/shared/02_filter_data.R")
-  source("scripts/shared/03_handle_missing.R")
-  source(score_script)
-  write.csv(data, paste0("outputs/", output_name, ".csv"), row.names = FALSE)
-}
+  data <- suppressMessages(
+    suppressWarnings(
+     filter_clinical_data(data, consent_df = consent)
+    )
+  )
+  data <- data_types(data)
 
-run_pipeline("BDI", "scripts/bdi/00_load.R", "scripts/bdi/04_score_bdi.R", "bdi_f")
-run_pipeline("ATQ", "scripts/atq/00_load.R", "scripts/atq/04_score_atq.R", "atq_f")
+  print(summary(data)) 
+  invisible(data)                         # return silently
+}
+```
+
+```{r}
+# Run two manually
+atq_clean <- run_pipeline("ATQ", "preprocess/atq.r")
+regt_clean <- run_pipeline("REGT", "preprocess/regt.r")
+```
+
+```{r}
+# Or loop through all
+all_data <- lapply(qes, function(q) {
+  run_pipeline(q, paste0("preprocess/", tolower(q), ".r"))
+})
+names(all_data) <- qes
 ```
