@@ -85,9 +85,16 @@ MCQ <- MCQ %>%
     mcq_pos, mcq_pos_prorated,
     mcq_csc, mcq_csc_prorated,
     mcq_neg, mcq_neg_prorated,
-    mcq_nc, mcq_nc_prorated,
-    mcq_total, mcq_total_prorated
+    mcq_nc, mcq_nc_prorated
   )
+
+  # Quality Control
+sapply(MCQ, function(x) sum(is.na(x)))
+summary(MCQ)
+
+#respondent 761 has way too high values, doesnt even make sense
+MCQ <- MCQ %>%
+  filter(respondent_id != 761)
 
 # Check N
 print(summarize_patient_counts(MCQ))

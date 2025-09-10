@@ -97,8 +97,11 @@ SCL <- SCL %>%
 # Keep only those where scl is valid
 SCL <- SCL %>%
   filter(as.integer(calc_scl_gsi_valid) == 1L)  %>%    # 2070 obs. of 18 variables 
-  select(-calc_scl_gsi_valid)                          # remove the column
-
+  select(-calc_scl_gsi_valid, -calc_scl_gsi_t)    
+                        # remove the column
+# Quality Control
+sapply(SCL, function(x) sum(is.na(x)))
+summary(SCL)
 
 # Check N
 print(summarize_patient_counts(SCL))

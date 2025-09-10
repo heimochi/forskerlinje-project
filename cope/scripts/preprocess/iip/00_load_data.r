@@ -24,12 +24,16 @@ IIP <- IIP %>%
   select(
     `respondent id`, `assessment instance context label`,
     `treatment id`, `treatment name`, `treatment type id`,
-    starts_with("calculation:IIP-64-")
+    # keep AA (answered counts) and T (T-scores); ignore P/PIP/Raw
+    `calculation:IIP-64-Domi-AA`, `calculation:IIP-64-Domi-T`,
+    `calculation:IIP-64-Hevn-AA`, `calculation:IIP-64-Hevn-T`,
+    `calculation:IIP-64-Kald-AA`, `calculation:IIP-64-Kald-T`,
+    `calculation:IIP-64-Usikk-AA`, `calculation:IIP-64-Usikk-T`,
+    `calculation:IIP-64-Lise-AA`, `calculation:IIP-64-Lise-T`,
+    `calculation:IIP-64-Foye-AA`, `calculation:IIP-64-Foye-T`,
+    `calculation:IIP-64-Ofre-AA`, `calculation:IIP-64-Ofre-T`,
+    `calculation:IIP-64-Kreve-AA`, `calculation:IIP-64-Kreve-T`
   ) %>%
-  mutate(across(
-    matches("^calculation:IIP-64-.*-(Raw|AA)$"),
-    ~ suppressWarnings(as.numeric(na_if(trimws(.), "")))
-  )) %>%
   rename(
     respondent_id            = `respondent id`,
     assessment_context_label = `assessment instance context label`,
@@ -37,53 +41,57 @@ IIP <- IIP %>%
     treatment_name           = `treatment name`,
     treatment_type_id        = `treatment type id`,
 
-    # raw
-    iip_pa = `calculation:IIP-64-Domi-Raw`,
-    iip_bc = `calculation:IIP-64-Hevn-Raw`,
-    iip_de = `calculation:IIP-64-Kald-Raw`,
-    iip_fg = `calculation:IIP-64-Usikk-Raw`,
-    iip_hi = `calculation:IIP-64-Lise-Raw`,
-    iip_jk = `calculation:IIP-64-Foye-Raw`,
-    iip_lm = `calculation:IIP-64-Ofre-Raw`,
-    iip_no = `calculation:IIP-64-Kreve-Raw`,
-
-    # answered
     iip_pa_aa = `calculation:IIP-64-Domi-AA`,
+    iip_pa_t  = `calculation:IIP-64-Domi-T`,
+
     iip_bc_aa = `calculation:IIP-64-Hevn-AA`,
+    iip_bc_t  = `calculation:IIP-64-Hevn-T`,
+
     iip_de_aa = `calculation:IIP-64-Kald-AA`,
+    iip_de_t  = `calculation:IIP-64-Kald-T`,
+
     iip_fg_aa = `calculation:IIP-64-Usikk-AA`,
+    iip_fg_t  = `calculation:IIP-64-Usikk-T`,
+
     iip_hi_aa = `calculation:IIP-64-Lise-AA`,
+    iip_hi_t  = `calculation:IIP-64-Lise-T`,
+
     iip_jk_aa = `calculation:IIP-64-Foye-AA`,
+    iip_jk_t  = `calculation:IIP-64-Foye-T`,
+
     iip_lm_aa = `calculation:IIP-64-Ofre-AA`,
-    iip_no_aa = `calculation:IIP-64-Kreve-AA`
+    iip_lm_t  = `calculation:IIP-64-Ofre-T`,
+
+    iip_no_aa = `calculation:IIP-64-Kreve-AA`,
+    iip_no_t  = `calculation:IIP-64-Kreve-T`
   ) %>%
+  # coerce AA and T robustly
   mutate(
-    iip_pa_prorated = if_else(iip_pa_aa/8 >= 0.70, score_prorate(iip_pa, iip_pa_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_bc_prorated = if_else(iip_bc_aa/8 >= 0.70, score_prorate(iip_bc, iip_bc_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_de_prorated = if_else(iip_de_aa/8 >= 0.70, score_prorate(iip_de, iip_de_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_fg_prorated = if_else(iip_fg_aa/8 >= 0.70, score_prorate(iip_fg, iip_fg_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_hi_prorated = if_else(iip_hi_aa/8 >= 0.70, score_prorate(iip_hi, iip_hi_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_jk_prorated = if_else(iip_jk_aa/8 >= 0.70, score_prorate(iip_jk, iip_jk_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_lm_prorated = if_else(iip_lm_aa/8 >= 0.70, score_prorate(iip_lm, iip_lm_aa, n_total = 8, min_prop = 0.70), NA_real_),
-    iip_no_prorated = if_else(iip_no_aa/8 >= 0.70, score_prorate(iip_no, iip_no_aa, n_total = 8, min_prop = 0.70), NA_real_)
+    across(ends_with("_aa"), ~ suppressWarnings(as.numeric(.))),
+    across(ends_with("_t"),  ~ suppressWarnings(as.numeric(.)))
   ) %>%
+  # keep T only if AA >= 6 (70% of 8 items); else NA
+  mutate(
+    across(ends_with("_t"), ~ .x, .names = "{.col}_orig"),
+    iip_pa_t = if_else(iip_pa_aa >= 6, iip_pa_t, NA_real_),
+    iip_bc_t = if_else(iip_bc_aa >= 6, iip_bc_t, NA_real_),
+    iip_de_t = if_else(iip_de_aa >= 6, iip_de_t, NA_real_),
+    iip_fg_t = if_else(iip_fg_aa >= 6, iip_fg_t, NA_real_),
+    iip_hi_t = if_else(iip_hi_aa >= 6, iip_hi_t, NA_real_),
+    iip_jk_t = if_else(iip_jk_aa >= 6, iip_jk_t, NA_real_),
+    iip_lm_t = if_else(iip_lm_aa >= 6, iip_lm_t, NA_real_),
+    iip_no_t = if_else(iip_no_aa >= 6, iip_no_t, NA_real_)
+  ) %>%
+  # basic sanity cap for T-scores (expected ~20–100)
+  mutate(across(ends_with("_t"), ~ ifelse(!is.na(.x) & (.x < 20 | .x > 100), NA_real_, .x))) %>%
   select(
-    respondent_id,
-    assessment_context_label,
-    treatment_id,
-    treatment_name,
-    treatment_type_id,
-    
-    # raw + prorated
-    iip_pa, iip_pa_prorated,
-    iip_bc, iip_bc_prorated,
-    iip_de, iip_de_prorated,
-    iip_fg, iip_fg_prorated,
-    iip_hi, iip_hi_prorated,
-    iip_jk, iip_jk_prorated,
-    iip_lm, iip_lm_prorated,
-    iip_no, iip_no_prorated
+    respondent_id, assessment_context_label, treatment_id, treatment_name, treatment_type_id,
+    iip_pa_t, iip_bc_t, iip_de_t, iip_fg_t, iip_hi_t, iip_jk_t, iip_lm_t, iip_no_t
   )
+
+  # Quality Control
+sapply(IIP, function(x) sum(is.na(x)))
+summary(IIP)
 
 # Check N
 print(summarize_patient_counts(IIP))

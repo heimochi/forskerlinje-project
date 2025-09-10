@@ -73,11 +73,14 @@ PSWQ <- PSWQ %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    pswq_core, pswq_core_prorated,
-    pswq_uncont, pswq_uncont_prorated,
-    pswq_engage, pswq_engage_prorated,
-    pswq_total, pswq_total_prorated
+    pswq_core_prorated,
+    pswq_uncont_prorated,
+    pswq_engage_prorated
   )
+
+  # Quality Control
+sapply(PSWQ, function(x) sum(is.na(x)))
+summary(PSWQ)
 
 # Check N
 print(summarize_patient_counts(PSWQ))
