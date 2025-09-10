@@ -104,6 +104,3 @@ pswq_total_prorated = if_else(
   # Quality Control
 sapply(PSWQ, function(x) sum(is.na(x)))
 summary(PSWQ)
-
-# Check N
-print(summarize_patient_counts(PSWQ))

@@ -84,6 +84,3 @@ REGT <- REGT %>%
 sapply(REGT, function(x) sum(is.na(x)))
 summary(REGT)
 # code treats NA in PD and MD as no due to missing 221 in PD 16 in MD
-
-# Check N
-print(summarize_patient_counts(REGT))

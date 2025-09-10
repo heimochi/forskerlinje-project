@@ -117,6 +117,3 @@ summary(MCQ)
 #respondent 761 has way too high values, doesnt even make sense
 MCQ <- MCQ %>%
   filter(respondent_id != 761)
-
-# Check N
-print(summarize_patient_counts(MCQ))

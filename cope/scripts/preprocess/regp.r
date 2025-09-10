@@ -149,6 +149,3 @@ sapply(REGP, function(x) sum(is.na(x)))
 
 # Dropped Sick leave (Q8) → ~20% missing 
 # Symptom duration (Q16) → ~18% missing but I have to keep it in for now
-
-# Check N
-print(summarize_patient_counts(REGP))

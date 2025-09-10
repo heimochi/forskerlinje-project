@@ -21,11 +21,7 @@ qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL") #regp not a p
 run_pipeline <- function(q_name, load_path) {
   source(load_path)
   data <- get(q_name)
-  data <- suppressMessages(
-    suppressWarnings(
-     filter_clinical_data(data, consent_df = consent)
-    )
-  )
+  data <- filter_clinical_data(data, consent_df = consent, verbose = FALSE)
   data <- data_types(data)
 
   print(summary(data)) 

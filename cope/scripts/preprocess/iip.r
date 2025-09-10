@@ -106,6 +106,3 @@ select(
   # Quality Control
 sapply(IIP, function(x) sum(is.na(x)))
 summary(IIP)
-
-# Check N
-print(summarize_patient_counts(IIP))

@@ -74,6 +74,3 @@ bdi_sa_sum_prorated = score_prorate(
   # Quality Control
 sapply(BDI, function(x) sum(is.na(x)))
 summary(BDI)
-
-# Check N
-print(summarize_patient_counts(BDI))

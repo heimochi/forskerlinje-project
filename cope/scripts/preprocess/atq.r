@@ -68,6 +68,3 @@ summary(ATQ)
 #ATQ %>% filter(atq_sum > 92) %>% select(respondent_id, atq_sum)
 # Many people with nonsensical outputs
 # Calculated the sum score from the raw data instead
-
-# Check N
-print(summarize_patient_counts(ATQ))

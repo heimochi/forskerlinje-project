@@ -48,6 +48,3 @@ mutate(
     # Quality Control
 sapply(BAI, function(x) sum(is.na(x)))
 summary(BAI)
-
-# Check N
-print(summarize_patient_counts(BAI), n = Inf, width = Inf)

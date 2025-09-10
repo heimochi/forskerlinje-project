@@ -146,6 +146,3 @@ sapply(SCL, function(x) sum(is.na(x)))
 summary(SCL)
 # used modum derived t scores because the raw scores were not falling in the 
 #plausable range, not sure why
-
-# Check N
-print(summarize_patient_counts(SCL))
