@@ -17,9 +17,6 @@ library(dplyr)      # for data manipulation
 # SCL Assessment data
 SCL<- read_csv2("/Users/maggieheimvik/Desktop/COPE/data/dataset/SCL90.csv")  #2081 obs of 1 variable
 
-# Consent data
-consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
-
 # ---------------------------------------------------------
 # Rename n select SCL column names for consistency
 # ---------------------------------------------------------
@@ -101,27 +98,6 @@ SCL <- SCL %>%
 SCL <- SCL %>%
   filter(as.integer(calc_scl_gsi_valid) == 1L)  %>%    # 2070 obs. of 18 variables 
   select(-calc_scl_gsi_valid)                          # remove the column
-
-# ---------------------------------------------------------
-# Filter for only participants that consented to having their data used
-# ---------------------------------------------------------
-
-consent <- consent %>%
-  select(respondent_id, consent)
-
-# 1) Build a de-duplicated set of valid IDs (consent == 1 or NA)
-valid_ids <- consent %>%
-  mutate(consent = as.integer(consent)) %>%
-  filter(is.na(consent) | consent == 1L) %>%
-  distinct(respondent_id)
-
-# 2) Keep only those IDs in SCL
-SCL <- SCL %>%
-  filter(respondent_id %in% valid_ids$respondent_id)    #1863 obs of 17 var
-
-# Replace empty strings with NA only in character columns
-SCL  <- SCL  %>%
-  mutate(across(where(is.character), ~na_if(., '')))
 
 
 # Check N
