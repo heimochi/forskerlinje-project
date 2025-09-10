@@ -14,7 +14,7 @@ library(dplyr)
 # Load raw data
 # ---------------------------------------------------------
 
-IIP <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/IIP64_avid.xls") #13646 obs of 144 var. 
+IIP <- read_excel(file.path(data_dir, "IIP64_avid.xls")) #13646 obs of 144 var. 
 
 # ---------------------------------------------------------
 # Rename n select IIP column names for consistency

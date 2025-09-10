@@ -1,8 +1,8 @@
 # ---------------------------------------------------------
-# Load BDI Data and Consent
+# Load BDI Data 
 # Author: MochiBear.Hei
 # Created: 2025-08-22
-# Description: Loads raw BDI assessment data and consent records.
+# Description: Loads raw BDI assessment data  records.
 # ---------------------------------------------------------
 
 # Libraries
@@ -14,11 +14,8 @@ library(dplyr)      # for data manipulation
 # Load raw data
 # ---------------------------------------------------------
 
-# BAI Assessment data
-BDI <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/BDI_avid.xls") #12035 obs. 53 var
-# Consent data
-consent <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/consent_a.csv") #5901 obs. of 30 var
-
+# BDI Assessment data
+BDI <- read_excel(file.path(data_dir, "BDI_avid.xls")) #12035 obs. 53 var
 
 # ---------------------------------------------------------
 # Rename n select BDI variables
@@ -59,8 +56,12 @@ BDI <- BDI %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    bdi_ca_sum, bdi_sa_sum, bdi_ca_sum_prorated, bdi_sa_sum_prorated
+    bdi_ca_sum_prorated, bdi_sa_sum_prorated
   )
+
+  # Quality Control
+sapply(BDI, function(x) sum(is.na(x)))
+summary(BDI)
 
 # Check N
 print(summarize_patient_counts(BDI))

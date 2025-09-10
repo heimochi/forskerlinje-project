@@ -1,11 +1,2 @@
 # Ignore the scripts with sensitive data 
-scripts/preprocess/atq/00_load_data.r
-scripts/preprocess/bai/00_load_data.r
-scripts/preprocess/bdi/00_load_data.r
-scripts/preprocess/iip/00_load_data.r
-scripts/preprocess/mcq/00_load_data.r
-scripts/preprocess/pswq/00_load_data.r
-scripts/preprocess/regp/00_load_data.r
-scripts/preprocess/regt/00_load_data.r
-scripts/preprocess/scl/00_load_data.r
-scripts/preprocess/shared/00_consent.r
+scripts/preprocess/shared/path.r

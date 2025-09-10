@@ -15,7 +15,7 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # BAI Assessment data
-BAI <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/scripts/anon/BAI_a.csv") #8743 obs. of 52 var
+BAI <- read_csv(file.path(data_dir, "scripts/anon/BAI_a.csv")) #8743 obs. of 52 var
 
 # ---------------------------------------------------------
 # Rename n select BAI column names for consistency
@@ -39,8 +39,12 @@ BAI <- BAI %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    bai_sum, bai_sum_prorated
+    bai_sum_prorated
   )
+
+    # Quality Control
+sapply(BAI, function(x) sum(is.na(x)))
+summary(BAI)
 
 # Check N
 print(summarize_patient_counts(BAI), n = Inf, width = Inf)

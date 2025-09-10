@@ -15,7 +15,7 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # SCL Assessment data
-SCL<- read_csv2("/Users/maggieheimvik/Desktop/COPE/data/dataset/SCL90.csv")  #2081 obs of 1 variable
+SCL<- read_csv2(file.path(data_dir, "SCL90.csv"))  #2081 obs of 1 variable
 
 # ---------------------------------------------------------
 # Rename n select SCL column names for consistency

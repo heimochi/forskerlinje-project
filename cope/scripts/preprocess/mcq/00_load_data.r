@@ -15,7 +15,7 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # MCQ Assessment data
-MCQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/MCQ_avid.xls") #4100 obs of 68 var
+MCQ <- read_excel(file.path(data_dir, "MCQ_avid.xls")) #4100 obs of 68 var
 
 # ---------------------------------------------------------
 # Rename n select MCQ column names for consistency

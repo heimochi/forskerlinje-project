@@ -7,6 +7,7 @@ execute:
 ---
 
 ```{r setup}
+source("preprocess/shared/path.r") #data_dir
 source("preprocess/shared/utilities.r") #small helpers
 source("preprocess/shared/00_consent.R") # load_consent()
 source("preprocess/shared/01_filter.r") # filter_clinical_data()

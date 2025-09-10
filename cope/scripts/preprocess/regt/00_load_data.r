@@ -14,7 +14,7 @@
 # ---------------------------------------------------------
 
 # REGP Assessment data
-REGT <- read_csv("/Users/maggieheimvik/Desktop/COPE/data/dataset/reg_t_a.csv") # 242 obs. of 30 var
+REGT <- read_csv(file.path(data_dir, "reg_t_a.csv")) # 242 obs. of 30 var
 
 # ---------------------------------------------------------
 # Rename n select REGP column names for consistency
@@ -86,6 +86,7 @@ REGT <- REGT %>%
 # Quality Control
 sapply(REGT, function(x) sum(is.na(x)))
 summary(REGT)
+
 #code treats NA in PD and MD as no due to missing 221 in PD 16 in MD
 
 # Check N

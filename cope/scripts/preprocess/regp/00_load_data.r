@@ -16,7 +16,7 @@ library(lubridate)
 # ---------------------------------------------------------
 
 # REGP Assessment data
-REGP <- read_csv2("/Users/maggieheimvik/Desktop/COPE/data/dataset/regp.csv") #487 obs. of 44 variables with the new dataset
+REGP <- read_csv2(file.path(data_dir, "regp.csv")) #487 obs. of 44 variables with the new dataset
 
 # ---------------------------------------------------------
 # Rename n select REGP column names for consistency
@@ -149,7 +149,7 @@ summary(REGP[c("age_at_admission","regp_sickleave_bin","symptom_duration_bin")])
 sapply(REGP, function(x) sum(is.na(x)))
 
 # I dropped Sick leave (Q8) → ~20% missing 
-# Symptom duration (Q16) → ~18% missing but i have to keep it in for now 
+# Symptom duration (Q16) → ~18% missing but i have to keep it in for now
 
 # Check N
 print(summarize_patient_counts(REGP))

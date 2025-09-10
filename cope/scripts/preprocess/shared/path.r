@@ -1,0 +1,1 @@
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"

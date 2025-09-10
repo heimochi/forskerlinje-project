@@ -15,8 +15,7 @@ library(dplyr)      # for data manipulation
 # ---------------------------------------------------------
 
 # PSWQ Assessment data
-PSWQ <- read_excel("/Users/maggieheimvik/Desktop/COPE/data/dataset/PSWQavid.xls")     # 2,729 
-
+PSWQ <- read_excel(file.path(data_dir, "PSWQavid.xls"))    # 2,729 
 
 # this questionnaire has a few items that are reverse scored
 # Define reverse scoring function (1<->5, 2<->4, 3 stays)
