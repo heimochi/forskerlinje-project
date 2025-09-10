@@ -1,6 +1,19 @@
+# ---------------------------------------------------------
+# Consent Module
+# Author: MochiBear.Hei
+# Created: 2025-09-10
+# Description: Load and clean consent data from CSV.
+#   - Reads consent file
+#   - Standardizes column names
+#   - Maps consent values to 1 / 0 / NA
+#   - Collapses duplicates per respondent
+# ---------------------------------------------------------
+
 library(readr)
 library(dplyr)
 library(janitor)
+
+# ---------------------------------------------------------
 
 load_consent <- function(
   csv_path = file.path(
