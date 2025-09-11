@@ -1,7 +1,7 @@
 # ---------------------------------------------------------
 # Load Symptom Checklist 90 Data
 # Author: MochiBear.Hei
-# Created: 2025-08-22
+# Created: 2025-09-10
 # Description: Loads raw SCL assessment data
 # ---------------------------------------------------------
 
@@ -24,12 +24,14 @@ SCL <- SCL %>%
     assessment.instance.context.label,
     treatment.id, treatment.name, treatment.type.id,
     respondent.gender,
-    
-    # Global indices (T by sex + validity)
-    calculation.GSI.T.Female, calculation.GSI.T.Male, calculation.GSI.Valid,
+
+    # GSI + validity
+    calculation.GSI.T.Female, calculation.GSI.T.Male,
+    calculation.GSI.Valid,
+
     calculation.PSDI.T.Female, calculation.PSDI.T.Male,
     calculation.PST.T.Female,  calculation.PST.T.Male,
-    
+
     # Dimension T by sex
     calculation.Angst.T.Female,           calculation.Angst.T.Male,
     calculation.Depresjon.T.Female,       calculation.Depresjon.T.Male,
@@ -39,9 +41,19 @@ SCL <- SCL %>%
     calculation.Paranoid.T.Female,        calculation.Paranoid.T.Male,
     calculation.Psykotisisme.T.Female,    calculation.Psykotisisme.T.Male,
     calculation.Somatisering.T.Female,    calculation.Somatisering.T.Male,
-    calculation.Tvangssymptomer.T.Female, calculation.Tvangssymptomer.T.Male
+    calculation.Tvangssymptomer.T.Female, calculation.Tvangssymptomer.T.Male,
+
+    # <-- add per-dimension validity flags
+    calculation.Angst.Valid,
+    calculation.Depresjon.Valid,
+    calculation.Fiendtlighet.Valid,
+    calculation.Fobisk.Valid,
+    calculation.Interpersonlig.Valid,
+    calculation.Paranoid.Valid,
+    calculation.Psykotisisme.Valid,
+    calculation.Somatisering.Valid,
+    calculation.Tvangssymptomer.Valid
   ) %>%
-  # standardize names
   rename(
     respondent_id            = respondent.id,
     assessment_context_label = assessment.instance.context.label,
@@ -50,9 +62,8 @@ SCL <- SCL %>%
     treatment_type_id        = treatment.type.id,
     scl_gender               = respondent.gender
   ) %>%
-  # collapse sex-specific T to a single T per scale
+  # 2) collapse sex-specific T to one T per scale
   mutate(
-    # globals
     calc_scl_gsi_t  = case_when(
       scl_gender == "female" ~ calculation.GSI.T.Female,
       scl_gender == "male"   ~ calculation.GSI.T.Male,
@@ -68,81 +79,108 @@ SCL <- SCL %>%
       scl_gender == "male"   ~ calculation.PST.T.Male,
       TRUE ~ NA_real_
     ),
-# dimensions
-calc_scl_anxiety_t = if_else(
-  scl_gender == "female",
-  calculation.Angst.T.Female,
-  calculation.Angst.T.Male,
-  missing = NA_real_
-),
-calc_scl_depression_t = if_else(
-  scl_gender == "female",
-  calculation.Depresjon.T.Female,
-  calculation.Depresjon.T.Male,
-  missing = NA_real_
-),
-calc_scl_hostility_t = if_else(
-  scl_gender == "female",
-  calculation.Fiendtlighet.T.Female,
-  calculation.Fiendtlighet.T.Male,
-  missing = NA_real_
-),
-calc_scl_phobic_t = if_else(
-  scl_gender == "female",
-  calculation.Fobisk.T.Female,
-  calculation.Fobisk.T.Male,
-  missing = NA_real_
-),
-calc_scl_interpersonal_t = if_else(
-  scl_gender == "female",
-  calculation.Interpersonlig.T.Female,
-  calculation.Interpersonlig.T.Male,
-  missing = NA_real_
-),
-calc_scl_paranoid_t = if_else(
-  scl_gender == "female",
-  calculation.Paranoid.T.Female,
-  calculation.Paranoid.T.Male,
-  missing = NA_real_
-),
-calc_scl_psychoticism_t = if_else(
-  scl_gender == "female",
-  calculation.Psykotisisme.T.Female,
-  calculation.Psykotisisme.T.Male,
-  missing = NA_real_
-),
-calc_scl_somatization_t = if_else(
-  scl_gender == "female",
-  calculation.Somatisering.T.Female,
-  calculation.Somatisering.T.Male,
-  missing = NA_real_
-),
-calc_scl_ocd_t = if_else(
-  scl_gender == "female",
-  calculation.Tvangssymptomer.T.Female,
-  calculation.Tvangssymptomer.T.Male,
-  missing = NA_real_
-)
-)  %>%
-  # final tidy set: IDs + one T per scale
+    calc_scl_anxiety_t = if_else(
+      scl_gender == "female", calculation.Angst.T.Female,
+      calculation.Angst.T.Male, missing = NA_real_
+    ),
+    calc_scl_depression_t = if_else(
+      scl_gender == "female", calculation.Depresjon.T.Female,
+      calculation.Depresjon.T.Male, missing = NA_real_
+    ),
+    calc_scl_hostility_t = if_else(
+      scl_gender == "female", calculation.Fiendtlighet.T.Female,
+      calculation.Fiendtlighet.T.Male, missing = NA_real_
+    ),
+    calc_scl_phobic_t = if_else(
+      scl_gender == "female", calculation.Fobisk.T.Female,
+      calculation.Fobisk.T.Male, missing = NA_real_
+    ),
+    calc_scl_interpersonal_t = if_else(
+      scl_gender == "female", calculation.Interpersonlig.T.Female,
+      calculation.Interpersonlig.T.Male, missing = NA_real_
+    ),
+    calc_scl_paranoid_t = if_else(
+      scl_gender == "female", calculation.Paranoid.T.Female,
+      calculation.Paranoid.T.Male, missing = NA_real_
+    ),
+    calc_scl_psychoticism_t = if_else(
+      scl_gender == "female", calculation.Psykotisisme.T.Female,
+      calculation.Psykotisisme.T.Male, missing = NA_real_
+    ),
+    calc_scl_somatization_t = if_else(
+      scl_gender == "female", calculation.Somatisering.T.Female,
+      calculation.Somatisering.T.Male, missing = NA_real_
+    ),
+    calc_scl_ocd_t = if_else(
+      scl_gender == "female", calculation.Tvangssymptomer.T.Female,
+      calculation.Tvangssymptomer.T.Male, missing = NA_real_
+    )
+  ) %>%
+  # 3) mask T-scores when their dimension’s Valid != 1
+  mutate(
+    calc_scl_anxiety_t = if_else(
+      as.integer(calculation.Angst.Valid) == 1L,
+      calc_scl_anxiety_t, NA_real_
+    ),
+    calc_scl_depression_t = if_else(
+      as.integer(calculation.Depresjon.Valid) == 1L,
+      calc_scl_depression_t, NA_real_
+    ),
+    calc_scl_hostility_t = if_else(
+      as.integer(calculation.Fiendtlighet.Valid) == 1L,
+      calc_scl_hostility_t, NA_real_
+    ),
+    calc_scl_phobic_t = if_else(
+      as.integer(calculation.Fobisk.Valid) == 1L,
+      calc_scl_phobic_t, NA_real_
+    ),
+    calc_scl_interpersonal_t = if_else(
+      as.integer(calculation.Interpersonlig.Valid) == 1L,
+      calc_scl_interpersonal_t, NA_real_
+    ),
+    calc_scl_paranoid_t = if_else(
+      as.integer(calculation.Paranoid.Valid) == 1L,
+      calc_scl_paranoid_t, NA_real_
+    ),
+    calc_scl_psychoticism_t = if_else(
+      as.integer(calculation.Psykotisisme.Valid) == 1L,
+      calc_scl_psychoticism_t, NA_real_
+    ),
+    calc_scl_somatization_t = if_else(
+      as.integer(calculation.Somatisering.Valid) == 1L,
+      calc_scl_somatization_t, NA_real_
+    ),
+    calc_scl_ocd_t = if_else(
+      as.integer(calculation.Tvangssymptomer.Valid) == 1L,
+      calc_scl_ocd_t, NA_real_
+    )
+  )
+
+# 4) keep only IDs + final T scores; filter on global validity
+SCL <- SCL %>%
+  filter(as.integer(calculation.GSI.Valid) == 1L) %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    calc_scl_gsi_t, calc_scl_gsi_valid = calculation.GSI.Valid,
     calc_scl_psdi_t, calc_scl_pst_t,
     calc_scl_anxiety_t, calc_scl_depression_t, calc_scl_hostility_t,
-    calc_scl_phobic_t, calc_scl_interpersonal_t, calc_scl_paranoid_t, 
+    calc_scl_phobic_t, calc_scl_interpersonal_t, calc_scl_paranoid_t,
     calc_scl_psychoticism_t, calc_scl_somatization_t, calc_scl_ocd_t
   )
 
-# Keep only those where scl is valid
-SCL <- SCL %>%
-  filter(as.integer(calc_scl_gsi_valid) == 1L)  %>%
-#2070 obs. of 18 variables 
-  select(-calc_scl_gsi_valid, -calc_scl_gsi_t)  # remove the column
+
+# Count how many T-scores were nulled by the Valid flags
+sapply(
+  SCL %>%
+    select(starts_with("calc_scl_")) %>%
+    select(-calc_scl_gsi_t),
+  ~ sum(is.na(.x))
+)
+
 
 # Quality Control
 sapply(SCL, function(x) sum(is.na(x)))
 summary(SCL)
 # used modum derived t scores because the raw scores were not falling in the 
 #plausable range, not sure why
+

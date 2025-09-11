@@ -1,44 +1,62 @@
-
 ---
 title: "Preprocessing Pipeline"
 format: html
 execute:
-  echo: true
+echo: true
 ---
 
 ```{r setup}
-source("preprocess/shared/path.r") #data_dir
-source("preprocess/shared/utilities.r") #small helpers
-source("preprocess/shared/00_consent.R") # load_consent()
-source("preprocess/shared/01_filter.r") # filter_clinical_data()
-source("preprocess/shared/02_data_types.r") # data_types(), check_types()
+source("preprocess/shared/path.r")                  # data_dir
+source("preprocess/shared/utilities.r")             # small helpers
+source("preprocess/shared/00_consent.R")            # load_consent()
+source("preprocess/shared/01_filter.r")             # filter_clinical_data()
+source("preprocess/shared/02_data_types.r")         # data_types(), check_types()
+source("preprocess/shared/03_merge.r")              # merge_instruments()
+
+consent <- load_consent()
+qes <- c("ATQ", "BAI") #regp not a part yet  , "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL"
 ```
 
 ```{r}
-consent <- load_consent()
-qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL") #regp not a part yet 
-
 run_pipeline <- function(q_name, load_path) {
   source(load_path)
   data <- get(q_name)
   data <- filter_clinical_data(data, consent_df = consent, verbose = FALSE)
   data <- data_types(data)
 
-  print(summary(data)) 
+  print(summary(data))                    # check
   invisible(data)                         # return silently
 }
 ```
 
 ```{r}
-# Run two manually
+# check
 atq_clean <- run_pipeline("ATQ", "preprocess/atq.r")
-regt_clean <- run_pipeline("REGT", "preprocess/regt.r")
+bai_clean <- run_pipeline("BAI", "preprocess/bai.r")
 ```
 
 ```{r}
-# Or loop through all
+# Loop through all
 all_data <- lapply(qes, function(q) {
   run_pipeline(q, paste0("preprocess/", tolower(q), ".r"))
 })
 names(all_data) <- qes
+```
+
+```{r}
+# build cleaned list first
+all_data <- setNames(
+  lapply(qes, function(q)
+    run_pipeline(q, paste0("preprocess/", tolower(q), ".r"))),
+  qes
+)
+
+# pick which instrument’s meta to prefer (e.g., "SCL" or "BAI").   , prefer_meta = "SCL"
+merged_wide <- merge_wide(all_data, verbose = TRUE)
+
+# sanity: one row per key?
+merged_wide %>%
+  count(respondent_id, assessment_context_label) %>%
+  filter(n > 1)
+
 ```

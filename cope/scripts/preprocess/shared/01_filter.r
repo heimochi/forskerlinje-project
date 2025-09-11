@@ -1,7 +1,7 @@
 # ---------------------------------------------------------
 # Filter Module
 # Author: MochiBear.Hei
-# Created: 2025-06-08
+# Created: 2025-09-01
 # Description: Standardized filtering for instruments (e.g., ATQ, BAI, etc.)
 # ---------------------------------------------------------
 
@@ -36,6 +36,7 @@ filter_clinical_data <- function(
     vpeek("after consent + na_if") %>%
     filter(treatment_type_id == 10) %>%
     vpeek("after treatment_type_id == 10") %>%
+    select(-treatment_type_id) %>%
     mutate(
       assessment_context_label = case_when(
         assessment_context_label %in% c(
