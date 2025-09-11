@@ -76,7 +76,7 @@ REGT <- REGT %>%
   # final minimal output
   select(
     respondent_id, assessment_context_label,
-    treatment_id, treatment_name, treatment_type_id, treatment_type_name,
+    treatment_id, treatment_name, treatment_type_id,
     regt_number_of_diagnoses, regt_mood_disorder, regt_personality_disorder
   )
 

@@ -14,7 +14,7 @@ source("preprocess/shared/02_data_types.r")         # data_types(), check_types(
 source("preprocess/shared/03_merge.r", echo = TRUE, verbose = TRUE)              # merge_instruments()
 
 consent <- load_consent()
-qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL") #regp not a part yet  
+qes <- c("ATQ", "BAI") #regp not a part yet  , "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL"
 ```
 
 ```{r}

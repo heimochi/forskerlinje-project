@@ -36,7 +36,7 @@ filter_clinical_data <- function(
     vpeek("after consent + na_if") %>%
     filter(treatment_type_id == 10) %>%
     vpeek("after treatment_type_id == 10") %>%
-    select(-treatment_type_id, -treatment_type_name) %>%
+    select(-treatment_type_id) %>%
     mutate(
       assessment_context_label = case_when(
         assessment_context_label %in% c(
