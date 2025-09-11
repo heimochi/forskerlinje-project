@@ -31,8 +31,8 @@ run_pipeline <- function(q_name, load_path) {
 
 ```{r}
 # check
-atq_clean <- run_pipeline("ATQ", "preprocess/atq.r")
-bai_clean <- run_pipeline("BAI", "preprocess/bai.r")
+ATQ <- run_pipeline("ATQ", "preprocess/atq.r")
+BAI <- run_pipeline("BAI", "preprocess/bai.r")
 ```
 
 ```{r}
@@ -46,14 +46,14 @@ names(all_data) <- qes
 ```{r}
 merged_all <- merge_instruments(list(
   bai = BAI,
-  atq = ATQ,
-  bdi = BDI,
-  iip = IIP,
-  mcq = MCQ,
-  pswq = PSWQ,
-  scl = SCL,
-  regp = REGP,
-  regt = REGT
+  atq = ATQ #,
+#  bdi = BDI,
+#  iip = IIP,
+#  mcq = MCQ,
+#  pswq = PSWQ,
+#  scl = SCL,
+#  regp = REGP,
+#  regt = REGT
 ), verbose = TRUE)
 
 ```
