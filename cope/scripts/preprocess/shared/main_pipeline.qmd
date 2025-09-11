@@ -44,19 +44,16 @@ names(all_data) <- qes
 ```
 
 ```{r}
-# build cleaned list first
-all_data <- setNames(
-  lapply(qes, function(q)
-    run_pipeline(q, paste0("preprocess/", tolower(q), ".r"))),
-  qes
-)
-
-# pick which instrument’s meta to prefer (e.g., "SCL" or "BAI").   , prefer_meta = "SCL"
-merged_wide <- merge_wide(all_data, verbose = TRUE)
-
-# sanity: one row per key?
-merged_wide %>%
-  count(respondent_id, assessment_context_label) %>%
-  filter(n > 1)
+merged_all <- merge_instruments(list(
+  bai = BAI,
+  atq = ATQ,
+  bdi = BDI,
+  iip = IIP,
+  mcq = MCQ,
+  pswq = PSWQ,
+  scl = SCL,
+  regp = REGP,
+  regt = REGT
+), verbose = TRUE)
 
 ```
