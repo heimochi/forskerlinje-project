@@ -168,16 +168,6 @@ SCL <- SCL %>%
     calc_scl_psychoticism_t, calc_scl_somatization_t, calc_scl_ocd_t
   )
 
-
-# Count how many T-scores were nulled by the Valid flags
-sapply(
-  SCL %>%
-    select(starts_with("calc_scl_")) %>%
-    select(-calc_scl_gsi_t),
-  ~ sum(is.na(.x))
-)
-
-
 # Quality Control
 sapply(SCL, function(x) sum(is.na(x)))
 summary(SCL)

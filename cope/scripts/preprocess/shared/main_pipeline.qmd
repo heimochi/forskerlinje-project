@@ -11,10 +11,10 @@ source("preprocess/shared/utilities.r")             # small helpers
 source("preprocess/shared/00_consent.R")            # load_consent()
 source("preprocess/shared/01_filter.r")             # filter_clinical_data()
 source("preprocess/shared/02_data_types.r")         # data_types(), check_types()
-source("preprocess/shared/03_merge.r")              # merge_instruments()
+source("preprocess/shared/03_merge.r", echo = TRUE, verbose = TRUE)              # merge_instruments()
 
 consent <- load_consent()
-qes <- c("ATQ", "BAI") #regp not a part yet  , "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL"
+qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL") #regp not a part yet  
 ```
 
 ```{r}
