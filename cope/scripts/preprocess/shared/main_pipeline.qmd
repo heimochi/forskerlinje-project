@@ -51,7 +51,7 @@ merged_all <- merge_instruments(
   verbose = TRUE
 )
 
-#print_merge_qc(merged_all)
+print_merge_qc(merged_all)
 ```
 
 ```{r}
@@ -61,7 +61,7 @@ cleaned_all <- handle_missing(
   max_missing_to_impute = 1,
   seed = 123
 )
-
+########################change missforest for atq to RMSE not classifcation
 summarize_patient_counts(cleaned_all)
 ```
 
