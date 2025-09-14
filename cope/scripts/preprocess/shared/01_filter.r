@@ -27,7 +27,6 @@ filter_clinical_data <- function(
 
   data %>%
     vpeek("start") %>%
-    # keep only consent == 1 or NA (no row inflation)
     semi_join(
       consent_df %>% filter(is.na(consent) | consent == 1L),
       by = setNames("respondent_id", id_col)
