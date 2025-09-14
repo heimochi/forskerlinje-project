@@ -1,0 +1,100 @@
+# ---------------------------------------------------------
+# --------------------QUALITY CONTROL----------------------
+# ---------------------------------------------------------
+# instrument_of()
+# - Classifies variable names into instruments.
+# - "calc_scl_*" → "SCL".
+# - Prefixes ^bai|atq|bdi|iip|mcq|pswq → uppercased instrument.
+# - REGP: names starting "regp_" or in the regp_unpref list.
+# - REGT: names starting "regt_".
+# - Anything else → "OTHER".
+# - Used by coverage_by_instrument() and flag_low_coverage().
+# - Returns: character vector of instrument labels.
+# ---------------------------------------------------------
+
+instrument_of <- function(vars) {
+  regp_unpref <- c(
+    "age_at_admission", "symptom_duration",
+    "regp_work_any_bin", "regp_prev_treat_bin",
+    "regp_partner_bin", "regp_work_pastyear_bin",
+    "regp_work_current_bin", "regp_prev_outpt_bin",
+    "regp_prev_inpt_bin", "symptom_duration_bin"
+  )
+
+  out <- ifelse(
+    grepl("^calc_scl_", vars), "SCL",
+    ifelse(
+      grepl("^(bai|atq|bdi|iip|mcq|pswq)_", vars, ignore.case = TRUE),
+      toupper(sub("^([a-z]+).*", "\\1", vars)),
+      ifelse(
+        grepl("^regp_", vars, ignore.case = TRUE) |
+          vars %in% regp_unpref,
+        "REGP",
+        ifelse(
+          grepl("^regt_", vars, ignore.case = TRUE),
+          "REGT",
+          "OTHER"
+        )
+      )
+    )
+  )
+  out
+}
+
+# ---------------------------------------------------------
+# coverage_by_instrument()
+# - Computes non-missing coverage for numeric variables.
+# - Excludes IDs: respondent_id, treatment_id.
+# - Uses instrument_of() to group variables by instrument.
+# - For each instrument, reports:
+#     - vars: number of variables,
+#     - mean_pct: mean % non-missing,
+#     - min_pct: minimum % non-missing.
+# - Sorted by mean_pct (descending) for quick scanning.
+# - Returns: tibble with instrument, vars, mean_pct, min_pct.
+# ---------------------------------------------------------
+
+coverage_by_instrument <- function(df) {
+  score_cols <- names(df)[vapply(df, is.numeric, logical(1))]
+  score_cols <- setdiff(score_cols, c("respondent_id", "treatment_id"))
+
+  inst <- instrument_of(score_cols)
+
+  tibble(
+    instrument = toupper(inst),
+    variable = score_cols,
+    non_na = colSums(!is.na(df[score_cols])),
+    pct = round(100 * non_na / nrow(df), 1)
+  ) %>%
+    group_by(instrument) %>%
+    summarise(
+      vars = n(),
+      mean_pct = round(mean(pct), 1),
+      min_pct = min(pct),
+      .groups = "drop"
+    ) %>%
+    arrange(desc(mean_pct))
+}
+
+# ---------------------------------------------------------
+# flag_low_coverage()
+# - Lists numeric variables with % non-missing below a threshold.
+# - Excludes IDs: respondent_id, treatment_id.
+# - Uses instrument_of() to label each variable.
+# - Argument 'thresh' is the % non-missing cutoff (default 85).
+# - Sorted by pct ascending to surface the worst offenders.
+# - Returns: tibble with instrument, variable, pct.
+# ---------------------------------------------------------
+
+flag_low_coverage <- function(df, thresh = 85) {
+  score_cols <- names(df)[vapply(df, is.numeric, logical(1))]
+  score_cols <- setdiff(score_cols, c("respondent_id", "treatment_id"))
+
+  tibble(
+    instrument = toupper(instrument_of(score_cols)),
+    variable = score_cols,
+    pct = round(100 * colMeans(!is.na(df[score_cols])), 1)
+  ) %>%
+    filter(pct < thresh) %>%
+    arrange(pct)
+}

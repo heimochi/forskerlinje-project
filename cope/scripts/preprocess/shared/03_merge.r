@@ -47,6 +47,7 @@ merge_instruments <- function(
   }
 
   allowed_ctx <- c("Assessment", "Admission", "Post-treatment")
+
   dflist <- lapply(dflist, function(df) {
     df %>%
       select(-any_of(c("treatment_name", "treatment_type_id"))) %>%
@@ -61,34 +62,154 @@ merge_instruments <- function(
     }
   }
 
+  # input summaries (also printed if verbose)
+  input_sum <- lapply(seq_along(dflist), function(i) {
+    df <- dflist[[i]]
+    n_rows <- nrow(df)
+    n_keys <- n_distinct(df[, keys, drop = FALSE])
+    sc <- names(df)[is_score_col(df)]
+    list(name = nm[i], rows = n_rows, keys = n_keys,
+         n_score = length(sc), score_names = sc)
+  })
+
   if (isTRUE(verbose)) {
     cat("\n# ---- Merge plan ----\n")
     cat("Keys: ", paste(keys, collapse = " + "), "\n\n", sep = "")
-    for (i in seq_along(dflist)) {
-      df <- dflist[[i]]
-      n_rows <- nrow(df)
-      n_keys <- n_distinct(df[, keys, drop = FALSE])
-      sc <- names(df)[is_score_col(df)]
+    for (s in input_sum) {
       cat(sprintf("[%s] rows: %s | keys: %s | score cols: %s\n",
-                  nm[i], n_rows, n_keys, length(sc)))
-      if (length(sc)) cat("   • ", paste(sc, collapse = ", "), "\n", sep = "")
+                  s$name, s$rows, s$keys, s$n_score))
+      if (length(s$score_names)) {
+        cat("   • ", paste(s$score_names, collapse = ", "), "\n", sep = "")
+      }
     }
     cat("\n")
   }
 
-  out <- Reduce(function(acc, df) {
+  # raw merged (pre-filter QC computed here)
+  raw_out <- Reduce(function(acc, df) {
     j <- full_join(acc, df, by = keys, suffix = c(".x", ".y"))
     coalesce_dupes(j)
   }, dflist)
 
-  out <- out %>%
+  # QC on raw_out (before allowed-context filter)
+  forbidden <- intersect(
+    names(raw_out),
+    c("treatment_name", "treatment_type_id")
+  )
+
+  bad_ctx <- setdiff(
+    unique(raw_out$assessment_context_label),
+    allowed_ctx
+  )
+
+  dup_keys <- raw_out %>%
+    count(across(all_of(keys)), name = "n") %>%
+    filter(n > 1)
+
+  # apply allowed-context filter
+  out <- raw_out %>%
     filter(assessment_context_label %in% allowed_ctx)
 
   if (isTRUE(verbose)) {
     cat("# ---- Merge complete ----\n")
     cat("Final rows: ", nrow(out),
-        " | Final columns: ", ncol(out), "\n\n", sep = "")
+        " | Final columns: ", ncol(out), "\n", sep = "")
+    if (length(forbidden)) {
+      cat("\n[QC] Forbidden columns resurrected: ",
+          paste(forbidden, collapse = ", "), "\n", sep = "")
+    } else {
+      cat("\n[QC] Forbidden columns resurrected: none\n")
+    }
+    if (length(bad_ctx)) {
+      cat("[QC] Unexpected context labels (pre-filter): ",
+          paste(bad_ctx, collapse = ", "), "\n", sep = "")
+    } else {
+      cat("[QC] Unexpected context labels (pre-filter): none\n")
+    }
+    if (nrow(dup_keys)) {
+      cat("[QC] Duplicate key rows: ", nrow(dup_keys), "\n", sep = "")
+      print(head(dup_keys, 10), n = 10)
+    } else {
+      cat("[QC] Duplicate key rows: none\n")
+    }
+    cat("\n")
   }
 
+  # attach QC as attribute for later programmatic checks
+  attr(out, "merge_qc") <- list(
+    inputs = input_sum,
+    forbidden_cols = forbidden,
+    unexpected_contexts = bad_ctx,
+    duplicate_keys = dup_keys
+  )
+
   out
+}
+
+
+
+# quality control for merge 
+
+print_merge_qc <- function(x) {
+  qc <- attr(x, "merge_qc")
+  if (is.null(qc)) {
+    cat("No 'merge_qc' attribute.\n")
+    return(invisible(NULL))
+  }
+  cat("# ---- Merge QC ----\n")
+  cat("Inputs:\n")
+  for (s in qc$inputs) {
+    cat(sprintf("  - %s: rows=%s keys=%s score_cols=%s\n",
+                s$name, s$rows, s$keys, s$n_score))
+  }
+  if (length(qc$forbidden_cols)) {
+    cat("Forbidden resurrected: ",
+        paste(qc$forbidden_cols, collapse = ", "), "\n", sep = "")
+  } else {
+    cat("Forbidden resurrected: none\n")
+  }
+  if (length(qc$unexpected_contexts)) {
+    cat("Unexpected contexts: ",
+        paste(qc$unexpected_contexts, collapse = ", "), "\n", sep = "")
+  } else {
+    cat("Unexpected contexts: none\n")
+  }
+  if (is.data.frame(qc$duplicate_keys) && nrow(qc$duplicate_keys)) {
+    cat("Duplicate key rows: ", nrow(qc$duplicate_keys), "\n", sep = "")
+    print(head(qc$duplicate_keys, 10), n = 10)
+  } else {
+    cat("Duplicate key rows: none\n")
+  }
+  invisible(qc)
+}print_merge_qc <- function(x) {
+  qc <- attr(x, "merge_qc")
+  if (is.null(qc)) {
+    cat("No 'merge_qc' attribute.\n")
+    return(invisible(NULL))
+  }
+  cat("# ---- Merge QC ----\n")
+  cat("Inputs:\n")
+  for (s in qc$inputs) {
+    cat(sprintf("  - %s: rows=%s keys=%s score_cols=%s\n",
+                s$name, s$rows, s$keys, s$n_score))
+  }
+  if (length(qc$forbidden_cols)) {
+    cat("Forbidden resurrected: ",
+        paste(qc$forbidden_cols, collapse = ", "), "\n", sep = "")
+  } else {
+    cat("Forbidden resurrected: none\n")
+  }
+  if (length(qc$unexpected_contexts)) {
+    cat("Unexpected contexts: ",
+        paste(qc$unexpected_contexts, collapse = ", "), "\n", sep = "")
+  } else {
+    cat("Unexpected contexts: none\n")
+  }
+  if (is.data.frame(qc$duplicate_keys) && nrow(qc$duplicate_keys)) {
+    cat("Duplicate key rows: ", nrow(qc$duplicate_keys), "\n", sep = "")
+    print(head(qc$duplicate_keys, 10), n = 10)
+  } else {
+    cat("Duplicate key rows: none\n")
+  }
+  invisible(qc)
 }

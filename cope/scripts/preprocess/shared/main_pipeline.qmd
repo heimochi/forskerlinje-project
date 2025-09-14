@@ -16,9 +16,10 @@ source("preprocess/shared/00_consent.R")            # load_consent()
 source("preprocess/shared/01_filter.r")             # filter_clinical_data()
 source("preprocess/shared/02_data_types.r")         # data_types(), check_types()
 source("preprocess/shared/03_merge.r", echo = TRUE, verbose = TRUE)              # merge_instruments()
-source("preprocess/shared/04_handle_missing.r")                                  #
+source("preprocess/shared/04_handle_missing.r")                                  # handle_missing(), ect.
+source("preprocess/shared/05_quality_control.r")      
 consent <- load_consent()
-qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "SCL", "REGT", "REGP") #regp not a part yet  , "REGT", "REGP"
+qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "SCL", "REGT", "REGP") 
 ```
 
 ```{r}
@@ -48,38 +49,24 @@ all_data <- setNames(
 ```
 
 ```{r}
-merged_all <- merge_instruments(all_data,
+merged_all <- merge_instruments(
+  all_data,
   keys = c("respondent_id", "assessment_context_label", "treatment_id"),
   verbose = TRUE
 )
 
-#QC merge
-# no forbidden columns resurrected
-intersect(names(merged_all), c("treatment_name", "treatment_type_id"))
-
-# allowed contexts only
-setdiff(unique(merged_all$assessment_context_label),
-        c("Assessment","Admission","Post-treatment"))
-
-# no duplicate keys in the final result
-merged_all %>%
-  count(respondent_id, assessment_context_label, treatment_id) %>%
-  filter(n > 1)
+#print_merge_qc(merged_all)
 ```
 
 ```{r}
-# 1) handle missing first
-cleaned_all <- handle_missing_simple(merged_all, max_missing_to_impute = 1)
+cleaned_all <- cleaned_all %>% dplyr::select(-dplyr::any_of("n_missing_scores"))
 
-# 2) then coverage on the cleaned data
 coverage_by_instrument(cleaned_all)
-flag_low_coverage(cleaned_all, thresh = 85)
+flag_low_coverage(cleaned_all, 85)
 
+summarize_patient_counts(cleaned_all)
 ```
 
 ```{r}
-
-coverage_by_instrument(merged_all)
-flag_low_coverage(merged_all, thresh = 85)
 
 ```

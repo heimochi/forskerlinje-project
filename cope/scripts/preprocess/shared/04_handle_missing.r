@@ -22,14 +22,23 @@ suppressPackageStartupMessages({
   library(missForest)
 })
 
-# -----------------------------------------------------------
+# ---------------------------------------------------------
 # handle_missing()
-#  - Fill Admission NAs from Assessment (same id + treatment)
-#  - On Admission only:
-#      - if 0–1 questionnaire sums/T missing → missForest impute
-#      - if ≥2 missing → exclude that Admission row
-#  - REGP/REGT vars (age, gender, chronicity) are untouched
-# -----------------------------------------------------------
+# - Applies prereg missing-data rules before coverage checks.
+# - Fills Admission NAs from same person's Assessment (match on
+#   respondent_id + treatment_id).
+# - On Admission rows only:
+#     - If 0–1 questionnaire sums/T are missing → impute with
+#       missForest.
+#     - If ≥2 questionnaire sums/T are missing → exclude that
+#       Admission row.
+# - Treats low-cardinality numeric vars (≤5 unique values) as
+#   factors during imputation, then converts back to numeric.
+# - Leaves REGP/REGT (age, gender, chronicity, etc.) untouched.
+# - Prints an audit count of excluded Admission rows.
+# - Returns: data with Admission imputed/excluded; Assessment and
+#   Post-treatment unchanged; contexts ordered.
+# ---------------------------------------------------------
 handle_missing <- function(
   data,
   max_missing_to_impute = 1,  # "fewer than two" = 0 or 1
@@ -44,16 +53,34 @@ handle_missing <- function(
   score_cols <- intersect(c(
     "atq_sum_prorated",
     "bai_sum_prorated",
-    "bdi_ca_sum_prorated", "bdi_sa_sum_prorated",
-    "iip_pa_t", "iip_bc_t", "iip_de_t", "iip_fg_t",
-    "iip_hi_t", "iip_jk_t", "iip_lm_t", "iip_no_t",
-    "mcq_cc_prorated", "mcq_pos_prorated", "mcq_csc_prorated",
-    "mcq_neg_prorated", "mcq_nc_prorated",
-    "pswq_core_prorated", "pswq_uncont_prorated", "pswq_engage_prorated",
-    "calc_scl_psdi_t", "calc_scl_pst_t", "calc_scl_anxiety_t",
-    "calc_scl_depression_t", "calc_scl_hostility_t", "calc_scl_phobic_t",
-    "calc_scl_interpersonal_t", "calc_scl_paranoid_t",
-    "calc_scl_psychoticism_t", "calc_scl_somatization_t",
+    "bdi_ca_sum_prorated",
+    "bdi_sa_sum_prorated",
+    "iip_pa_t",
+    "iip_bc_t",
+    "iip_de_t",
+    "iip_fg_t",
+    "iip_hi_t",
+    "iip_jk_t",
+    "iip_lm_t",
+    "iip_no_t",
+    "mcq_cc_prorated",
+    "mcq_pos_prorated",
+    "mcq_csc_prorated",
+    "mcq_neg_prorated",
+    "mcq_nc_prorated",
+    "pswq_core_prorated",
+    "pswq_uncont_prorated",
+    "pswq_engage_prorated",
+    "calc_scl_psdi_t",
+    "calc_scl_pst_t",
+    "calc_scl_anxiety_t",
+    "calc_scl_depression_t",
+    "calc_scl_hostility_t",
+    "calc_scl_phobic_t",
+    "calc_scl_interpersonal_t",
+    "calc_scl_paranoid_t",
+    "calc_scl_psychoticism_t",
+    "calc_scl_somatization_t",
     "calc_scl_ocd_t"
   ), names(data))
 
@@ -96,16 +123,44 @@ handle_missing <- function(
 
   if (nrow(to_impute) > 0) {
     set.seed(seed)
+
+    # Detect numeric cols with ≤5 unique non-NA values
+    ord_cols <- names(select(to_impute, all_of(score_cols)))
+    ord_cols <- ord_cols[vapply(
+      to_impute[ord_cols],
+      function(x) is.numeric(x) &&
+        length(unique(x[!is.na(x)])) <= 5,
+      logical(1)
+    )]
+
+    # Build imputand: cast those to factors for classification RF
     mf_in <- to_impute %>%
       select(all_of(score_cols)) %>%
+      mutate(across(
+        all_of(ord_cols),
+        ~ factor(.x, levels = sort(unique(.x[!is.na(.x)])))
+      )) %>%
       as.data.frame()
 
     mf_out <- missForest(
-      mf_in, maxiter = 5, verbose = FALSE
+      mf_in,
+      maxiter = 5,
+      verbose = FALSE
     )
 
-    imputed_scores <- as_tibble(mf_out$ximp) %>%
-      setNames(score_cols)
+    imputed_scores <- as.data.frame(mf_out$ximp)
+
+    # Convert factor columns back to numeric
+    if (length(ord_cols)) {
+      imputed_scores <- imputed_scores %>%
+        mutate(across(
+          all_of(ord_cols),
+          ~ as.numeric(as.character(.x))
+        ))
+    }
+
+    # Restore original score column names and order
+    imputed_scores <- setNames(imputed_scores, score_cols)
 
     adm_imputed <- to_impute %>%
       select(-all_of(score_cols)) %>%
@@ -144,75 +199,3 @@ handle_missing <- function(
   out
 }
 
-# -----------------------------------------------------------
-# instrument_of(): classify variables by instrument
-# -----------------------------------------------------------
-instrument_of <- function(vars) {
-  regp_unpref <- c(
-    "age_at_admission", "symptom_duration",
-    "regp_work_any_bin", "regp_prev_treat_bin",
-    "regp_partner_bin", "regp_work_pastyear_bin",
-    "regp_work_current_bin", "regp_prev_outpt_bin",
-    "regp_prev_inpt_bin", "symptom_duration_bin"
-  )
-
-  out <- ifelse(
-    grepl("^calc_scl_", vars), "SCL",
-    ifelse(
-      grepl("^(bai|atq|bdi|iip|mcq|pswq)_", vars, ignore.case = TRUE),
-      toupper(sub("^([a-z]+).*", "\\1", vars)),
-      ifelse(
-        grepl("^regp_", vars, ignore.case = TRUE) |
-          vars %in% regp_unpref,
-        "REGP",
-        ifelse(
-          grepl("^regt_", vars, ignore.case = TRUE),
-          "REGT",
-          "OTHER"
-        )
-      )
-    )
-  )
-  out
-}
-
-# -----------------------------------------------------------
-# coverage_by_instrument(): mean/min % non-missing per instrument
-# -----------------------------------------------------------
-coverage_by_instrument <- function(df) {
-  score_cols <- names(df)[vapply(df, is.numeric, logical(1))]
-  score_cols <- setdiff(score_cols, c("respondent_id", "treatment_id"))
-
-  inst <- instrument_of(score_cols)
-
-  tibble(
-    instrument = toupper(inst),
-    variable = score_cols,
-    non_na = colSums(!is.na(df[score_cols])),
-    pct = round(100 * non_na / nrow(df), 1)
-  ) %>%
-    group_by(instrument) %>%
-    summarise(
-      vars = n(),
-      mean_pct = round(mean(pct), 1),
-      min_pct = min(pct),
-      .groups = "drop"
-    ) %>%
-    arrange(desc(mean_pct))
-}
-
-# -----------------------------------------------------------
-# flag_low_coverage(): list variables with % non-missing < thresh
-# -----------------------------------------------------------
-flag_low_coverage <- function(df, thresh = 85) {
-  score_cols <- names(df)[vapply(df, is.numeric, logical(1))]
-  score_cols <- setdiff(score_cols, c("respondent_id", "treatment_id"))
-
-  tibble(
-    instrument = toupper(instrument_of(score_cols)),
-    variable = score_cols,
-    pct = round(100 * colMeans(!is.na(df[score_cols])), 1)
-  ) %>%
-    filter(pct < thresh) %>%
-    arrange(pct)
-}
