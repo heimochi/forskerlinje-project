@@ -19,7 +19,7 @@ library(dplyr)
 # ---------------------------------------------------------
 
 merge_instruments <- function(dflist,
-                              keys = c("respondent_id", "assessment_context_label"),
+                              keys = c("respondent_id", "assessment_context_label", "treatment_id"),
                               verbose = TRUE) {
   stopifnot(is.list(dflist), length(dflist) > 0)
 

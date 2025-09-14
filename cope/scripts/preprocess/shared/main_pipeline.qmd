@@ -5,6 +5,10 @@ execute:
 echo: true
 ---
 
+Description: This script sources shared helpers, loads and cleans each questionnaire 
+(via `run_pipeline()`), and merges selected instruments into a single 
+wide dataset (`merge_instruments()`) using respondent ID and context label.
+
 ```{r setup}
 source("preprocess/shared/path.r")                  # data_dir
 source("preprocess/shared/utilities.r")             # small helpers

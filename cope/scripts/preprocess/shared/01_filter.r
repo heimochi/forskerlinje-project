@@ -75,6 +75,7 @@ filter_clinical_data <- function(
       )
     ) %>%
     vpeek("after context + treatment filters") %>%
+    select(-treatment_name) %>%
     distinct(
       across(all_of(c(id_col, "assessment_context_label"))),
       .keep_all = TRUE
