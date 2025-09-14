@@ -18,7 +18,7 @@ source("preprocess/shared/02_data_types.r")         # data_types(), check_types(
 source("preprocess/shared/03_merge.r", echo = TRUE, verbose = TRUE)              # merge_instruments()
 
 consent <- load_consent()
-qes <- c("ATQ", "BAI") #regp not a part yet  , "BDI", "IIP", "MCQ", "PSWQ", "REGT", "SCL"
+qes <- c("ATQ", "BAI", "BDI", "IIP", "MCQ", "PSWQ", "SCL") #regp not a part yet  , "REGT", "REGP"
 ```
 
 ```{r}
@@ -34,7 +34,7 @@ run_pipeline <- function(q_name, load_path) {
 ```
 
 ```{r}
-# check
+#------------For testing purposes-------------------
 ATQ <- run_pipeline("ATQ", "preprocess/atq.r")
 BAI <- run_pipeline("BAI", "preprocess/bai.r")
 ```
@@ -50,12 +50,12 @@ names(all_data) <- qes
 ```{r}
 merged_all <- merge_instruments(list(
   bai  = BAI,
-  atq  = ATQ
-  # bdi  = BDI,
-  # iip  = IIP,
-  # mcq  = MCQ,
-  # pswq = PSWQ,
-  # scl  = SCL,
+  atq  = ATQ,
+  bdi  = BDI,
+  iip  = IIP,
+  mcq  = MCQ,
+  pswq = PSWQ,
+  scl  = SCL
   # regp = REGP,
   # regt = REGT
 ), keys = c("respondent_id", "assessment_context_label", "treatment_id"), verbose = TRUE)
