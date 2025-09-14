@@ -17,11 +17,7 @@ library(dplyr)
 
 merge_instruments <- function(
   dflist,
-  keys = c(
-    "respondent_id",
-    "assessment_context_label",
-    "treatment_id"
-  ),
+  keys = c("respondent_id", "assessment_context_label", "treatment_id"),
   verbose = TRUE
 ) {
   stopifnot(length(dflist) >= 1)
@@ -50,6 +46,13 @@ merge_instruments <- function(
     df[, keep, drop = FALSE]
   }
 
+  allowed_ctx <- c("Assessment", "Admission", "Post-treatment")
+  dflist <- lapply(dflist, function(df) {
+    df %>%
+      select(-any_of(c("treatment_name", "treatment_type_id"))) %>%
+      filter(assessment_context_label %in% allowed_ctx)
+  })
+
   for (i in seq_along(dflist)) {
     miss <- setdiff(keys, names(dflist[[i]]))
     if (length(miss)) {
@@ -68,9 +71,7 @@ merge_instruments <- function(
       sc <- names(df)[is_score_col(df)]
       cat(sprintf("[%s] rows: %s | keys: %s | score cols: %s\n",
                   nm[i], n_rows, n_keys, length(sc)))
-      if (length(sc)) {
-        cat("   • ", paste(sc, collapse = ", "), "\n", sep = "")
-      }
+      if (length(sc)) cat("   • ", paste(sc, collapse = ", "), "\n", sep = "")
     }
     cat("\n")
   }
@@ -79,6 +80,9 @@ merge_instruments <- function(
     j <- full_join(acc, df, by = keys, suffix = c(".x", ".y"))
     coalesce_dupes(j)
   }, dflist)
+
+  out <- out %>%
+    filter(assessment_context_label %in% allowed_ctx)
 
   if (isTRUE(verbose)) {
     cat("# ---- Merge complete ----\n")
