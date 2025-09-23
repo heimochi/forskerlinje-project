@@ -64,95 +64,95 @@ SCL <- SCL %>%
   ) %>%
   # 2) collapse sex-specific T to one T per scale
   mutate(
-    calc_scl_gsi_t  = case_when(
+    scl_gsi_t  = case_when(
       scl_gender == "female" ~ calculation.GSI.T.Female,
       scl_gender == "male"   ~ calculation.GSI.T.Male,
       TRUE ~ NA_real_
     ),
-    calc_scl_psdi_t = case_when(
+    scl_psdi_t = case_when(
       scl_gender == "female" ~ calculation.PSDI.T.Female,
       scl_gender == "male"   ~ calculation.PSDI.T.Male,
       TRUE ~ NA_real_
     ),
-    calc_scl_pst_t  = case_when(
+    scl_pst_t  = case_when(
       scl_gender == "female" ~ calculation.PST.T.Female,
       scl_gender == "male"   ~ calculation.PST.T.Male,
       TRUE ~ NA_real_
     ),
-    calc_scl_anxiety_t = if_else(
+    scl_anxiety_t = if_else(
       scl_gender == "female", calculation.Angst.T.Female,
       calculation.Angst.T.Male, missing = NA_real_
     ),
-    calc_scl_depression_t = if_else(
+    scl_depression_t = if_else(
       scl_gender == "female", calculation.Depresjon.T.Female,
       calculation.Depresjon.T.Male, missing = NA_real_
     ),
-    calc_scl_hostility_t = if_else(
+    scl_hostility_t = if_else(
       scl_gender == "female", calculation.Fiendtlighet.T.Female,
       calculation.Fiendtlighet.T.Male, missing = NA_real_
     ),
-    calc_scl_phobic_t = if_else(
+    scl_phobic_t = if_else(
       scl_gender == "female", calculation.Fobisk.T.Female,
       calculation.Fobisk.T.Male, missing = NA_real_
     ),
-    calc_scl_interpersonal_t = if_else(
+    scl_interpersonal_t = if_else(
       scl_gender == "female", calculation.Interpersonlig.T.Female,
       calculation.Interpersonlig.T.Male, missing = NA_real_
     ),
-    calc_scl_paranoid_t = if_else(
+    scl_paranoid_t = if_else(
       scl_gender == "female", calculation.Paranoid.T.Female,
       calculation.Paranoid.T.Male, missing = NA_real_
     ),
-    calc_scl_psychoticism_t = if_else(
+    scl_psychoticism_t = if_else(
       scl_gender == "female", calculation.Psykotisisme.T.Female,
       calculation.Psykotisisme.T.Male, missing = NA_real_
     ),
-    calc_scl_somatization_t = if_else(
+    scl_somatization_t = if_else(
       scl_gender == "female", calculation.Somatisering.T.Female,
       calculation.Somatisering.T.Male, missing = NA_real_
     ),
-    calc_scl_ocd_t = if_else(
+    scl_ocd_t = if_else(
       scl_gender == "female", calculation.Tvangssymptomer.T.Female,
       calculation.Tvangssymptomer.T.Male, missing = NA_real_
     )
   ) %>%
   # 3) mask T-scores when their dimension’s Valid != 1
   mutate(
-    calc_scl_anxiety_t = if_else(
+    scl_anxiety_t = if_else(
       as.integer(calculation.Angst.Valid) == 1L,
-      calc_scl_anxiety_t, NA_real_
+      scl_anxiety_t, NA_real_
     ),
-    calc_scl_depression_t = if_else(
+    scl_depression_t = if_else(
       as.integer(calculation.Depresjon.Valid) == 1L,
-      calc_scl_depression_t, NA_real_
+      scl_depression_t, NA_real_
     ),
-    calc_scl_hostility_t = if_else(
+    scl_hostility_t = if_else(
       as.integer(calculation.Fiendtlighet.Valid) == 1L,
-      calc_scl_hostility_t, NA_real_
+      scl_hostility_t, NA_real_
     ),
-    calc_scl_phobic_t = if_else(
+    scl_phobic_t = if_else(
       as.integer(calculation.Fobisk.Valid) == 1L,
-      calc_scl_phobic_t, NA_real_
+      scl_phobic_t, NA_real_
     ),
-    calc_scl_interpersonal_t = if_else(
+    scl_interpersonal_t = if_else(
       as.integer(calculation.Interpersonlig.Valid) == 1L,
-      calc_scl_interpersonal_t, NA_real_
+      scl_interpersonal_t, NA_real_
     ),
-    calc_scl_paranoid_t = if_else(
+    scl_paranoid_t = if_else(
       as.integer(calculation.Paranoid.Valid) == 1L,
-      calc_scl_paranoid_t, NA_real_
+      scl_paranoid_t, NA_real_
     ),
-    calc_scl_psychoticism_t = if_else(
+    scl_psychoticism_t = if_else(
       as.integer(calculation.Psykotisisme.Valid) == 1L,
-      calc_scl_psychoticism_t, NA_real_
+      scl_psychoticism_t, NA_real_
     ),
-    calc_scl_somatization_t = if_else(
+    scl_somatization_t = if_else(
       as.integer(calculation.Somatisering.Valid) == 1L,
-      calc_scl_somatization_t, NA_real_
+      scl_somatization_t, NA_real_
     ),
-    calc_scl_ocd_t = if_else(
+    scl_ocd_t = if_else(
       as.integer(calculation.Tvangssymptomer.Valid) == 1L,
-      calc_scl_ocd_t, NA_real_
+      scl_ocd_t, NA_real_
     )
   )
 
@@ -162,10 +162,10 @@ SCL <- SCL %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    calc_scl_psdi_t, calc_scl_pst_t,
-    calc_scl_anxiety_t, calc_scl_depression_t, calc_scl_hostility_t,
-    calc_scl_phobic_t, calc_scl_interpersonal_t, calc_scl_paranoid_t,
-    calc_scl_psychoticism_t, calc_scl_somatization_t, calc_scl_ocd_t
+    scl_psdi_t, scl_pst_t,
+    scl_anxiety_t, scl_depression_t, scl_hostility_t,
+    scl_phobic_t, scl_interpersonal_t, scl_paranoid_t,
+    scl_psychoticism_t, scl_somatization_t, scl_ocd_t
   )
 
 # Quality Control

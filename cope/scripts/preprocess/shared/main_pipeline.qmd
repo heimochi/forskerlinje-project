@@ -58,25 +58,30 @@ print_merge_qc(merged_all)
 # missing data imputation
 cleaned_all <- handle_missing(
   merged_all,
-  max_missing_to_impute = 1,
+  max_missing_to_impute = 2,
   seed = 123
 )
-########################change missforest for atq to RMSE not classifcation
+
 summarize_patient_counts(cleaned_all)
 ```
 
 ```{r}
-# quality control
-print_impute_qc(cleaned_all)
+# quality control imputation
+qc <- attr(cleaned_all, "qc_impute")
+str(qc, max.level = 1)
 
-# deeper check:
-# qc_dist_check(cleaned_all, vars = c("bai_sum_prorated","iip_pa_t"))
+View(qc$excluded_keys)
+View(qc$imputed_map)
+# OOB errors (NRMSE for numeric, PFC for factor-like)
+View(qc$oob)
 
-# drop helper column if it exists
-cleaned_all <- cleaned_all %>%
-  dplyr::select(-dplyr::any_of("n_missing_scores"))
+# summary
+print(qc_summary, n = Inf)
 
-# check coverage on the cleaned data
-coverage_by_instrument(cleaned_all)
-flag_low_coverage(cleaned_all, thresh = 85)
+# generate plots to check imputed distributions
+#qc_plot_var(cleaned_all, qc, "scl_psdi_t")
+# qc_plot_var(cleaned_all, qc, "scl_pst_t")
+# qc_plot_var(cleaned_all, qc, "atq_sum_prorated")
+# qc_plot_var(cleaned_all, qc, "mcq_csc_prorated")
+
 ```

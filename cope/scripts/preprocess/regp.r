@@ -79,15 +79,15 @@ REGP_full <- REGP %>%
     ),
 
     # --- derived continuous ---
-    age_at_admission = if_else(
+    regp_age_at_admission = if_else(
       !is.na(admission_year) & !is.na(regp_birth_year_num),
       admission_year - regp_birth_year_num, NA_real_
     ),
-    age_at_admission = if_else(
-      !is.na(age_at_admission) & (age_at_admission < 16 | age_at_admission > 100),
-      NA_real_, age_at_admission
+    regp_age_at_admission = if_else(
+      !is.na(regp_age_at_admission) & (regp_age_at_admission < 16 | regp_age_at_admission > 100),
+      NA_real_, regp_age_at_admission
     ),
-    symptom_duration = if_else(
+    regp_symptom_duration = if_else(
       !is.na(admission_year) & !is.na(regp_onset_year_num),
       admission_year - regp_onset_year_num, NA_real_
     ),
@@ -123,9 +123,9 @@ REGP_full <- REGP %>%
       regp_prev_inpt == 2 ~ 0,
       TRUE ~ NA_real_
     ),
-    symptom_duration_bin = case_when(
-      symptom_duration >= 5 ~ 1,   # chronic
-      symptom_duration <  5 ~ 0,   # acute
+    regp_symptom_duration_bin = case_when(
+      regp_symptom_duration >= 5 ~ 1,   # chronic
+      regp_symptom_duration <  5 ~ 0,   # acute
       TRUE ~ NA_real_
     ),
 
@@ -149,8 +149,8 @@ REGP <- REGP_full %>%
   select(
     respondent_id, assessment_context_label,
     treatment_id, treatment_name, treatment_type_id,
-    regp_gender, age_at_admission,
-    symptom_duration,            # continuous years
+    regp_gender, regp_age_at_admission,
+    regp_symptom_duration,            # continuous years
     regp_work_any_bin,           # Work (Yes/No)
     regp_prev_treat_bin          # Previous treatment (Yes/No)
   )
@@ -162,7 +162,7 @@ cat("\nQC — counts for collapsed binaries:\n")
 print(table(WorkAny = REGP$regp_work_any_bin, useNA = "ifany"))
 print(table(PrevTx  = REGP$regp_prev_treat_bin, useNA = "ifany"))
 cat("\nQC — Symptom Duration (years):\n")
-summary(REGP$symptom_duration)
+summary(REGP$regp_symptom_duration)
 
 # Dropped Sick leave (Q8) → ~20% missing 
 # Symptom duration (Q16) → ~18% missing but I have to keep it in for now
