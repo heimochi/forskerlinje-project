@@ -61,7 +61,7 @@ cleaned_all <- handle_missing(
   max_missing_to_impute = 2,
   seed = 123
 )
-
+# check
 summarize_patient_counts(cleaned_all)
 ```
 
@@ -83,5 +83,18 @@ print(qc_summary, n = Inf)
 # qc_plot_var(cleaned_all, qc, "scl_pst_t")
 # qc_plot_var(cleaned_all, qc, "atq_sum_prorated")
 # qc_plot_var(cleaned_all, qc, "mcq_csc_prorated")
-
 ```
+
+```{r}
+# write to csv
+output_path <- file.path(data_dir, "cleaned_all.csv")
+
+write.csv(
+  cleaned_all,
+  output_path,
+  row.names = FALSE
+)
+
+cat("Saved cleaned dataset to:", output_path, "\n")
+```
+
