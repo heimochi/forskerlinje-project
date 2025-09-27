@@ -1,0 +1,22 @@
+---
+title: "Analysis Pipeline"
+format: html
+execute:
+echo: true
+---
+
+
+```{r}
+source("analysis/path.r")                                        # data_dir
+source("analysis/00_build_split")   
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}

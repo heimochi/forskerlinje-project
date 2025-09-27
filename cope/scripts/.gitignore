@@ -1,2 +1,3 @@
 # Ignore the scripts with sensitive data 
 scripts/preprocess/shared/path.r
+scripts/analysis/path.r

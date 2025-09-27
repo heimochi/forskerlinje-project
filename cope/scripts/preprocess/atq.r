@@ -61,6 +61,7 @@ ATQ <- ATQ %>%
     atq_sum_prorated
   )
 
+
     # Quality Control
 sapply(ATQ, function(x) sum(is.na(x)))
 summary(ATQ)
