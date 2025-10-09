@@ -40,46 +40,57 @@ handle_missing <- function(
       "treatment_id") %in% names(data)
   ))
 
-# Score columns
-scl_cols <- grep("^scl_.*_t$", names(data), value = TRUE)
-score_cols <- intersect(c(
-  "atq_sum_prorated", "bai_sum_prorated",
-  "bdi_ca_sum_prorated", "bdi_sa_sum_prorated",
-  "iip_pa_t", "iip_bc_t", "iip_de_t", "iip_fg_t",
-  "iip_hi_t", "iip_jk_t", "iip_lm_t", "iip_no_t",
-  "mcq_cc_prorated", "mcq_pos_prorated",
-  "mcq_csc_prorated", "mcq_neg_prorated",
-  "mcq_nc_prorated", "pswq_core_prorated",
-  "pswq_uncont_prorated", "pswq_engage_prorated"
-), names(data))
-score_cols <- union(score_cols, scl_cols)
+  # Score columns
+  scl_cols <- grep("^scl_.*_t$", names(data), value = TRUE)
+  score_cols <- intersect(c(
+    "atq_sum_prorated", "bai_sum_prorated",
+    "bdi_ca_sum_prorated", "bdi_sa_sum_prorated",
+    "iip_pa_t", "iip_bc_t", "iip_de_t", "iip_fg_t",
+    "iip_hi_t", "iip_jk_t", "iip_lm_t", "iip_no_t",
+    "mcq_cc_prorated", "mcq_pos_prorated",
+    "mcq_csc_prorated", "mcq_neg_prorated",
+    "mcq_nc_prorated", "pswq_core_prorated",
+    "pswq_uncont_prorated", "pswq_engage_prorated"
+  ), names(data))
+  score_cols <- union(score_cols, scl_cols)
 
-# <-- sanitize types (no-op if score_cols is empty)
-data <- data %>%
-  mutate(across(
-    any_of(score_cols),
-    ~{
-      x <- .
-      if (is.factor(x))   x <- as.character(x)
-      if (is.character(x)) x <- suppressWarnings(as.numeric(x))
-      x[!is.finite(x)] <- NA_real_
-      as.double(x)
-    }
-  ))
-
-# keep your existing early return
-if (length(score_cols) == 0) {
-  return(
-    data %>%
-      arrange(
-        respondent_id, treatment_id,
-        factor(
-          assessment_context_label,
-          levels = c("Admission", "Post-treatment", "Assessment")
+  if (length(score_cols) == 0) {
+    return(
+      data %>%
+        arrange(
+          respondent_id, treatment_id,
+          factor(
+            assessment_context_label,
+            levels = c("Admission", "Post-treatment", "Assessment")
+          )
         )
-      )
+    )
+  }
+
+# Treat "Invalid Number" (and similar) as NA, parse characters to numeric,
+# and drop non-finite (Inf/-Inf/NaN).
+data <- data %>%
+  mutate(
+    across(
+      any_of(score_cols),
+      ~ {
+        x <- .
+        if (is.factor(x)) x <- as.character(x)
+        if (is.character(x)) {
+          x <- trimws(x)
+          # common bad tokens -> NA
+          x[x %in% c("Invalid Number", "invalid number",
+                     "NaN", "nan", "Inf", "-Inf", "")] <- NA_character_
+          # tolerant parsing of numerics in strings
+          x <- readr::parse_number(x)
+        }
+        # if numeric already, just sanitize non-finites
+        if (is.numeric(x)) x[!is.finite(x)] <- NA_real_
+        as.double(x)
+      }
+    )
   )
-}
+
   # ---- borrow Assessment values ----
 assess_scores <- data %>%
   filter(assessment_context_label == "Assessment") %>%
