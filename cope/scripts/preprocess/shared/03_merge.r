@@ -174,17 +174,3 @@ print_merge_qc <- function(x) {
   }
   invisible(qc)
 }
-
-# check how many unique values there are per row for imputation next
-
-unique_counts <- merged_all %>%
-  summarise(across(
-    everything(),
-    ~ n_distinct(.x, na.rm = TRUE)
-  )) %>%
-  tidyr::pivot_longer(cols = everything(),
-                      names_to = "variable",
-                      values_to = "n_unique") %>%
-  arrange(n_unique)
-
-print(unique_counts, n = Inf)
