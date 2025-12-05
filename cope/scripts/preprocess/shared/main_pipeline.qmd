@@ -14,7 +14,7 @@ source("preprocess/shared/path.r")                                        # data
 source("preprocess/shared/utilities.r")                                   # small helpers
 source("preprocess/shared/00_consent.R")                                  # load_consent()
 source("preprocess/shared/01_filter.r")                                   # filter_clinical_data()
-source("preprocess/shared/02_data_types.r")                               # data_types(), check_types()
+source("preprocess/shared/02_data_types.r")                               # clean_numeric, data_types(), check_types()
 source("preprocess/shared/03_merge.r", echo = TRUE, verbose = TRUE)       # merge_instruments()
 source("preprocess/shared/04_handle_missing.r")                           # handle_missing(), ect.
 source("preprocess/shared/05_quality_control.r")      
@@ -28,6 +28,7 @@ run_pipeline <- function(q_name, load_path) {
   source(load_path)
   data <- get(q_name)
   data <- filter_clinical_data(data, consent_df = consent, verbose = FALSE)
+  data <- clean_numeric(data) 
   data <- data_types(data)
 
   print(summary(data))                    # check
@@ -63,6 +64,7 @@ cleaned_all <- handle_missing(
 )
 # check
 summarize_patient_counts(cleaned_all)
+
 ```
 
 ```{r}

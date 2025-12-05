@@ -17,39 +17,35 @@ library(dplyr)
 # - all *_prorated and *_t score variables → numeric
 # ---------------------------------------------------------
 
+clean_numeric <- function(x) {
+  x <- as.character(x)
+  x <- trimws(gsub("\\s+", " ", gsub("\u00A0", " ", x, fixed = TRUE)))
+  x[grepl("^(invalid\\s*number|n/?a|na|nan|inf|-?inf|null|missing|not\\s*available)$",
+          x, ignore.case = TRUE)] <- NA
+  out <- suppressWarnings(as.numeric(x))
+  out[is.nan(out) | is.infinite(out)] <- NA_real_
+  out
+}
+
 data_types <- function(df) {
-  stopifnot(is.data.frame(df))
-
-  id_ints <- c("respondent_id", "treatment_id", "treatment_type_id",
-               "regt_number_of_diagnoses")
-
-  chr_cols <- c("assessment_context_label", "treatment_name", "treatment_type_name")
-
-  regt_binary_ints <- c("regt_mood_disorder", "regt_personality_disorder")
-
-  # Any *_prorated or *_t score columns across scales
+  id_ints <- c("respondent_id","treatment_id","treatment_type_id","regt_number_of_diagnoses")
+  chr_cols <- c("assessment_context_label","treatment_name","treatment_type_name")
+  regt_binary_ints <- c("regt_mood_disorder","regt_personality_disorder")
   score_regex <- "(?:_prorated|_t)$"
 
   df %>%
     mutate(
-      # IDs / counts
       across(any_of(id_ints), ~ suppressWarnings(as.integer(round(as.numeric(.))))),
-
-      # Labels / names
       across(any_of(chr_cols), as.character),
-
-      # REGT binaries -> 0/1 integers (accept yes/no/true/false/0/1)
       across(any_of(regt_binary_ints), ~ {
         v <- tolower(trimws(as.character(.)))
-        case_when(
+        dplyr::case_when(
           v %in% c("1","true","t","yes","y","ja")  ~ 1L,
           v %in% c("0","false","f","no","n","nei") ~ 0L,
-          TRUE ~ suppressWarnings(as.integer(as.numeric(.)))
+          TRUE ~ suppressWarnings(as.integer(as.numeric(v)))
         )
       }),
-
-      # Questionnaire scores to numeric
-      across(matches(score_regex), ~ suppressWarnings(as.numeric(.)))
+      across(matches(score_regex), clean_numeric)
     )
 }
 
@@ -71,3 +67,8 @@ check_types <- function(df) {
   cols <- intersect(cols, names(df))
   vapply(df[cols], function(x) paste(class(x), collapse="/"), character(1))
 }
+
+#check again
+bad_inf <- names(aa_scores)[sapply(aa_scores, \(x) is.numeric(x) && any(is.infinite(x)))]
+bad_nan <- names(aa_scores)[sapply(aa_scores, \(x) is.numeric(x) && any(is.nan(x)))]
+list(inf_cols = bad_inf, nan_cols = bad_nan)
