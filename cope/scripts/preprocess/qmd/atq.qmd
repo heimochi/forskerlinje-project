@@ -1,0 +1,146 @@
+---
+title: "atq"
+format: html
+execute:
+echo: true
+---
+Load ATQ Data
+Author: MochiBear.Hei
+Created: 2025-12-19
+Description: Loads raw ATQ assessment data
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Load data
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+data <- read_csv(file.path(data_dir, "clean/filtered/atq.csv")) 
+```
+
+# check
+```{r}
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+colnames(data)
+str(data)
+summary(data)
+```
+
+# check range
+```{r}
+atq_items <- paste0("q", 1:23)
+
+atq_sub <- c(
+  "calculation_modumbad_atq_pan_sum",
+  "calculation_modumbad_atq_ptsd_sum",
+  "calculation_modumbad_atq_sos_sum",
+  "calculation_modumbad_atq_sum"
+)
+
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    all_of(atq_items),
+    all_of(atq_sub)
+  ) %>%
+  rename(
+    atq_panic = calculation_modumbad_atq_pan_sum,
+    atq_ptsd = calculation_modumbad_atq_ptsd_sum,
+    atq_social = calculation_modumbad_atq_sos_sum,
+    atq_total = calculation_modumbad_atq_sum) %>%
+  # Remove rows with missing total score already checked its okie
+  filter(!is.na(atq_total))
+
+atq_sub <- c(
+  "atq_panic",
+  "atq_ptsd",
+  "atq_social",
+  "atq_total"
+)
+#str(data) #check 
+summary(data[atq_sub])
+# ranges for q should be 0-10
+# total score range should be 0-230
+# panic should be 0-70
+# ptsd should be 0-120
+# social anxiert should be 0-40
+```
+
+#check scores
+```{r}
+missing_check <- data %>%
+  mutate(
+    has_total = !is.na(atq_total),
+    has_panic = !is.na(atq_panic),
+    has_ptsd = !is.na(atq_ptsd),
+    has_sos = !is.na(atq_social)
+  )
+
+cat("\n=== Missing Calculated Scores ===\n")
+cat("Missing total score:", sum(!missing_check$has_total), "\n")
+cat("Missing panic score:", sum(!missing_check$has_panic), "\n")
+cat("Missing PTSD score:", sum(!missing_check$has_ptsd), "\n")
+cat("Missing social anxiety score:", sum(!missing_check$has_sos), "\n")
+
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+```
+
+data type
+```{r}
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    atq_total
+  ) %>%
+  mutate(
+    respondent_id = as.numeric(respondent_id),
+    treatment_id = as.numeric(treatment_id),
+    atq_total = as.numeric(atq_total),
+    assessment_context_label = factor(
+      assessment_context_label,
+      levels = c("Assessment", "Admission", "Post-treatment")
+    )
+  )
+```
+
+#check missingness
+```{r}
+missing_summary <- data %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "pct_missing")
+
+# Plot
+ggplot(missing_summary, aes(x = reorder(variable, -pct_missing), y = pct_missing)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = sprintf("%.1f%%", pct_missing)), vjust = -0.5) +
+  labs(
+    title = "ATQ - Missing Data by Variable",
+    x = "Variable",
+    y = "% Missing"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Summary
+print(missing_summary %>% arrange(desc(pct_missing)))
+```
+
+#final set 
+```{r}
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+cat("Rows:", nrow(data), "\n")
+cat("Columns:", paste(colnames(data), collapse = ", "), "\n\n")
+table(data$assessment_context_label, useNA = "always")
+```
+
+
+```{r}
+write_csv(data, file.path(data_dir, "clean/atq.csv"))
+```

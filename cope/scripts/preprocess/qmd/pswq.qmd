@@ -1,0 +1,192 @@
+---
+title: "pswq"
+author: "mochibear"
+format: html
+editor: source
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Load data
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+data <- read_csv(file.path(data_dir, "clean/filtered/pswq.csv")) 
+```
+
+# check dataset
+```{r}
+#View(data)
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+colnames(data)
+str(data)
+summary(data)
+#reverse scored items already reversed 
+```
+
+#define dataset
+```{r}
+# dimensions are core Worries, Uncontrollability of Worry, Worry Engagement
+pswq_items <- paste0("q", 1:16)
+
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    all_of(pswq_items),
+    pswq_total = calculation_pswq_all_sum
+  )
+
+```
+
+```{r}
+# Calculate missingness for each column
+missing_summary <- data %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "pct_missing")
+
+# Plot
+ggplot(missing_summary, aes(x = reorder(variable, -pct_missing), y = pct_missing)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = sprintf("%.1f%%", pct_missing)), 
+            vjust = -0.5, size = 3) +
+  labs(
+    title = "pswq - Missing Data by Variable",
+    x = "Variable",
+    y = "% Missing"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+data <- data %>%
+  mutate(
+    n_missing = rowSums(is.na(select(., all_of(pswq_items)))),
+    pct_missing = (n_missing / 16) * 100
+  )
+
+cat("Rows with 0% missing:", sum(data$pct_missing == 0), "\n")
+cat("Rows with <30% missing:", sum(data$pct_missing < 30), "\n")
+cat("Rows with ≥30% missing:", sum(data$pct_missing >= 30), "\n\n")
+
+# Look at rows with missing items
+missing_items <- data %>%
+  filter(n_missing > 0)
+
+View(missing_items)
+#total ranges 16 to 80
+```
+
+mean imputation
+```{r}
+# for items with ≤30% missing
+data <- data %>%
+  filter(pct_missing < 30) %>%  # Exclude rows with too much missing
+  rowwise() %>%
+  mutate(
+    # Person-mean imputation
+    person_mean = mean(c_across(all_of(pswq_items)), na.rm = TRUE),
+    across(
+      all_of(pswq_items),
+      ~ if_else(is.na(.), person_mean, .)
+    )
+  ) %>%
+  ungroup()
+
+cat("\nImputed", sum(data$pct_missing > 0 & data$pct_missing < 30), "rows\n")
+```
+
+#calculate subscales 
+```{r}
+data <- data %>%
+  rowwise() %>%
+  mutate(
+    # Core Worries 6 items, range 6-30
+    pswq_core = sum(c_across(c(q1, q3, q4, q5, q8, q11))),
+    
+    # Uncontrollability 6 items, range 6-30
+    pswq_uncontrol = sum(c_across(c(q6, q7, q9, q13, q15, q16))),
+    
+    # Worry Engagement  4 items, range 4-20
+    pswq_engagement = sum(c_across(c(q2, q10, q12, q14)))
+  ) %>%
+  ungroup() 
+
+#check that the calucalted scales match the total
+data <- data %>%
+  mutate(
+    subscales_sum = pswq_core + pswq_uncontrol + pswq_engagement,
+    matches_total = abs(subscales_sum - pswq_total) < 0.5
+  )
+
+cat("Subscales match total:", sum(data$matches_total, na.rm = TRUE), "/", 
+    sum(!is.na(data$pswq_total)), "\n")
+
+# Check ranges
+cat("Total (should be 16-80):\n")
+summary(data$pswq_total)
+
+cat("\nCore (should be 6-30):\n")
+summary(data$pswq_core)
+
+cat("\nUncontrol (should be 6-30):\n")
+summary(data$pswq_uncontrol)
+
+cat("\nEngagement (should be 4-20):\n")
+summary(data$pswq_engagement)
+
+```
+
+```{r}
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    pswq_core,
+    pswq_uncontrol,
+    pswq_engagement
+  ) %>%
+  mutate(across(all_of(c("pswq_core", "pswq_uncontrol","pswq_engagement")), ~round(.x, 0))) %>%
+  mutate(
+    respondent_id = as.numeric(respondent_id),
+    treatment_id = as.numeric(treatment_id),
+    across(starts_with("pswq_"), as.numeric),
+    assessment_context_label = factor(
+      assessment_context_label,
+      levels = c("Assessment", "Admission", "Post-treatment")
+    )
+  )
+```
+
+#final
+```{r}
+
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+cat("Rows:", nrow(data), "\n")
+cat("Columns:", paste(colnames(data), collapse = ", "), "\n\n")
+
+cat("Assessment contexts:\n")
+table(data$assessment_context_label, useNA = "always")
+
+View(data)
+summary(data)
+```
+
+```{r}
+write_csv(data, file.path(data_dir, "clean/pswq.csv"))
+```
+
+
+```{r}
+```
+
+```{r}
+```
+

@@ -1,0 +1,193 @@
+---
+title: "bdi"
+author: "mochibear"
+format: html
+editor: visual
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Load data
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+data <- read_csv(file.path(data_dir, "clean/filtered/bdi.csv")) 
+```
+
+# check dataset
+```{r}
+View(data)
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+colnames(data)
+str(data)
+summary(data)
+```
+
+# define dataset
+```{r}
+# define item sets (cognitive affective vs somatic affective)
+ca_items <- c(
+  "q1", "q2", "q3", "q4", "q5", "q6",
+  "q7", "q8", "q9", "q12", "q13", "q14"
+)  # 12 items
+
+sa_items <- c(
+  "q10", "q11", "q15", "q16", "q17",
+  "q18", "q19", "q20", "q21"
+)  # 9 items
+
+bdi_items <- c(ca_items, sa_items) #all items
+
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    all_of(ca_items),
+    all_of(sa_items),
+    calculation_bdi_ii_ans_amount,  # number of items answered
+    calculation_bdi_ii_tot,   # bdi total score
+    calculation_bdi_ii_ans_amount_percent # 
+  ) %>%
+  rename(
+    bdi_answered =  calculation_bdi_ii_ans_amount,
+    bdi_total = calculation_bdi_ii_tot,
+    bdi_ans_pct = calculation_bdi_ii_ans_amount_percent
+  ) %>%
+  filter(!is.na(bdi_total)) # Remove rows with missing total
+```
+
+# check range
+```{r}
+#items should be 0-3
+summary(data[bdi_items])
+#total should be 
+summary(data$bdi_total)
+summary(data$bdi_answered)
+```
+
+check total score
+```{r}
+# total should be 0-63 (21 items × 3)
+cat("Min:", min(data$bdi_total, na.rm = TRUE), "\n")
+cat("Max:", max(data$bdi_total, na.rm = TRUE), "\n")
+cat("Missing:", sum(is.na(data$bdi_total)), "\n\n")
+```
+
+```{r}
+# Calculate missingness for each column
+missing_summary <- data %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "pct_missing")
+
+# Plot
+ggplot(missing_summary, aes(x = reorder(variable, -pct_missing), y = pct_missing)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = sprintf("%.1f%%", pct_missing)), 
+            vjust = -0.5, size = 3) +
+  labs(
+    title = "BDI - Missing Data by Variable",
+    x = "Variable",
+    y = "% Missing"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+# calculate subscales
+```{r}
+data <- data %>%
+  rowwise() %>%
+  mutate(
+    # cognitive-affective (0-36: 12 items × 3)
+    bdi_ca = sum(c_across(all_of(ca_items)), na.rm = TRUE),
+    bdi_ca_missing = sum(is.na(c_across(all_of(ca_items)))),
+    
+    # somatic-affective (0-27: 9 items × 3)
+    bdi_sa = sum(c_across(all_of(sa_items)), na.rm = TRUE),
+    bdi_sa_missing = sum(is.na(c_across(all_of(sa_items)))),
+    
+    # total missing
+    n_missing = sum(is.na(c_across(all_of(bdi_items)))),
+    pct_missing = (n_missing / length(bdi_items)) * 100
+  ) %>%
+  ungroup()
+```
+
+# Check subscale ranges
+```{r}
+#CA subscale (should be 0-36)
+cat("Min:", min(data$bdi_ca, na.rm = TRUE), 
+    "Max:", max(data$bdi_ca, na.rm = TRUE), "\n")
+
+#SA subscale (should be 0-27)
+cat("Min:", min(data$bdi_sa, na.rm = TRUE), 
+    "Max:", max(data$bdi_sa, na.rm = TRUE), "\n")
+```
+
+```{r}
+# does CA + SA = Total?
+data %>%
+  mutate(
+    my_total = bdi_ca + bdi_sa,
+    difference = bdi_total - my_total
+  ) %>%
+  select(respondent_id, bdi_total, my_total, difference, bdi_ca, bdi_sa) %>%
+  head(20) %>%
+  View()
+
+# Summary of differences
+data %>%
+  mutate(difference = bdi_total - (bdi_ca + bdi_sa)) %>%
+  summary()
+```
+
+#data types
+```{r}
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    bdi_ca,
+    bdi_sa
+  ) %>%
+  mutate(
+    respondent_id = as.numeric(respondent_id),
+    treatment_id = as.numeric(treatment_id),
+    bdi_ca = as.numeric(bdi_ca),
+    bdi_sa = as.numeric(bdi_sa),
+    assessment_context_label = factor(
+      assessment_context_label,
+      levels = c("Assessment", "Admission", "Post-treatment")
+    )
+  )
+
+```
+
+#final  
+```{r}
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+cat("Rows:", nrow(data), "\n")
+cat("Columns:", paste(colnames(data), collapse = ", "), "\n\n")
+
+cat("Assessment contexts:\n")
+table(data$assessment_context_label, useNA = "always")
+
+View(data)
+```
+
+```{r}
+write_csv(data, file.path(data_dir, "clean/bdi.csv"))
+```
+
+```{r}
+
+```
+
+```{r}
+
+```

@@ -1,0 +1,96 @@
+---
+title: "bai"
+author: "mochibear"
+format: html
+editor: visual
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+# Load data
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+data <- read_csv(file.path(data_dir, "clean/filtered/bai.csv")) 
+```
+
+# check dataset
+```{r}
+View(data)
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+colnames(data)
+str(data)
+summary(data)
+```
+
+# define dataset
+```{r}
+bai_items <- paste0("q", 1:21) 
+
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    all_of(bai_items),
+    calc_ans,  # number of items answered
+    calc_tot   # BAI total score
+  ) %>%
+  rename(
+    bai_total = calc_tot,
+    bai_answered = calc_ans
+  )
+```
+
+#check range
+```{r}
+#items should be 0-3
+summary(data[bai_items])
+#total should be 
+summary(data$bai_total)
+summary(data$bai_answered)
+```
+
+# data types
+```{r}
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    bai_total
+  ) %>%
+  filter(!is.na(bai_total)) %>%  # Remove if missing total score
+  mutate(
+    respondent_id = as.numeric(respondent_id),
+    treatment_id = as.numeric(treatment_id),
+    bai_total = as.numeric(bai_total),
+    assessment_context_label = factor(
+      assessment_context_label,
+      levels = c("Assessment", "Admission", "Post-treatment")
+    )
+  )
+
+```
+
+#final
+```{r}
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+cat("Rows:", nrow(data), "\n")
+cat("Columns:", paste(colnames(data), collapse = ", "), "\n\n")
+table(data$assessment_context_label, useNA = "always")
+View(data)
+```
+#save
+```{r}
+write_csv(data, file.path(data_dir, "clean/bai.csv"))
+```
+
+
+```{r}
+
+```
+

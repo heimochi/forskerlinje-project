@@ -1,0 +1,207 @@
+---
+title: "iip"
+author: "mochibear"
+format: html
+editor: source
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readr)
+
+```
+
+# Load data
+
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+data <- read_csv(file.path(data_dir, "clean/filtered/iip.csv")) 
+```
+
+# check dataset
+
+```{r}
+#View(data)
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+colnames(data)
+#str(data)
+#summary(data)
+```
+
+# define dataset
+
+```{r}
+iip_subscales_t <- c(
+  "calculation_iip_64_domi_t",   # Domineering/Controlling
+  "calculation_iip_64_hevn_t",   # Vindictive/Self-Centred
+  "calculation_iip_64_kald_t",   # Cold/Distant
+  "calculation_iip_64_usikk_t",  # Socially Inhibited
+  "calculation_iip_64_lise_t",   # Non-assertive
+  "calculation_iip_64_kreve_t",  # Overly accommodating
+  "calculation_iip_64_ofre_t",   # Self-Sacrificing
+  "calculation_iip_64_foye_t"    # Intrusive/Needy
+)
+
+data <- data %>%
+  select(
+    respondent_id,
+    assessment_context_label,
+    treatment_id,
+    all_of(iip_subscales_t),
+    calculation_iip_64_tot_t,     # Total T-score
+    calculation_iip_64_tot_aa     # Items answered
+  ) %>%
+  rename(
+    iip_domineering = calculation_iip_64_domi_t,
+    iip_vindictive = calculation_iip_64_hevn_t,
+    iip_cold = calculation_iip_64_kald_t,
+    iip_inhibited = calculation_iip_64_usikk_t,
+    iip_nonassertive = calculation_iip_64_lise_t,
+    iip_accommodating = calculation_iip_64_kreve_t,
+    iip_sacrificing = calculation_iip_64_ofre_t,
+    iip_intrusive = calculation_iip_64_foye_t,
+    iip_total = calculation_iip_64_tot_t,
+    iip_answered = calculation_iip_64_tot_aa
+  )
+
+#redefine
+iip_subscales_t <- c(
+  "iip_domineering",
+  "iip_vindictive",
+  "iip_cold",
+  "iip_inhibited",
+  "iip_nonassertive",
+  "iip_accommodating",
+  "iip_sacrificing",
+  "iip_intrusive"
+)
+```
+
+#data types
+```{r}
+data <- data %>%
+  mutate(
+    respondent_id = as.numeric(respondent_id),
+    treatment_id = as.numeric(treatment_id),
+    across(all_of(c("iip_total", iip_subscales_t)), as.numeric),
+    assessment_context_label = factor(
+      assessment_context_label,
+      levels = c("Assessment", "Admission", "Post-treatment")
+    )
+  )
+```
+
+# check range
+```{r}
+#iip items are rated 0-4, with 8 items per subscale
+#T-scores typically range 30-80 (mean=50, SD=10)
+#summary(data$iip_total)
+
+#Subscale range: 0-32 (8 items × 4)
+#summary(data[iip_subscales_t])
+```
+
+# missing
+```{r}
+# Calculate missingness for each column
+missing_summary <- data %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "pct_missing")
+
+# Plot
+ggplot(missing_summary, aes(x = reorder(variable, -pct_missing), y = pct_missing)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = sprintf("%.1f%%", pct_missing)), 
+            vjust = -0.5, size = 3) +
+  labs(
+    title = "IIP - Missing Data by Variable",
+    x = "Variable",
+    y = "% Missing"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+3 missing they havent answered at all i removed them
+```{r}
+missing_rows <- data %>%
+  filter(is.na(iip_total)) %>%
+  select(respondent_id, assessment_context_label, treatment_id, 
+         iip_total, iip_answered, all_of(iip_subscales_t))
+
+View(missing_rows)
+
+#check for subscales
+missing_rows %>%
+  summarise(
+    n_rows = n(),
+    missing_domineering = sum(is.na(iip_domineering)),
+    missing_vindictive = sum(is.na(iip_vindictive)),
+    missing_cold = sum(is.na(iip_cold)),
+    missing_inhibited = sum(is.na(iip_inhibited)),
+    missing_nonassertive = sum(is.na(iip_nonassertive)),
+    missing_accommodating = sum(is.na(iip_accommodating)),
+    missing_sacrificing = sum(is.na(iip_sacrificing)),
+    missing_intrusive = sum(is.na(iip_intrusive))
+  )
+print(missing_rows)
+
+data <- data %>%
+  filter(!is.na(iip_total))
+```
+
+```{r}
+#find where that 1 missing is
+rows_with_partial_missing <- data %>%
+  filter(!is.na(iip_total)) %>%  # Total exists
+  filter(if_any(all_of(iip_subscales_t), is.na))  
+# But some subscale is NA
+
+#only one missing, respondent 2671
+View(rows_with_partial_missing)
+```
+
+##mean imputation
+```{r}
+data <- data %>%
+  mutate(
+    iip_domineering = ifelse(
+      is.na(iip_domineering),
+      mean(iip_domineering, na.rm = TRUE),
+      iip_domineering
+    )
+  )
+
+cat("Imputed with mean:", mean(data$iip_domineering, na.rm = TRUE), "\n")
+
+#round all values
+data <- data %>%
+  mutate(across(all_of(c("iip_total", iip_subscales_t)), ~round(.x, 0)))
+
+```
+
+#final
+
+```{r}
+data <- data %>%
+  select(-iip_total, -iip_answered)
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+cat("Rows:", nrow(data), "\n")
+cat("Columns:", paste(colnames(data), collapse = ", "), "\n\n")
+
+cat("Assessment contexts:\n")
+table(data$assessment_context_label, useNA = "always")
+
+View(data)
+```
+
+```{r}
+write_csv(data, file.path(data_dir, "clean/iip.csv"))
+```
+
+
+```{r}
+```
