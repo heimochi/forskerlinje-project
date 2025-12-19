@@ -1,0 +1,30 @@
+---
+title: "regt"
+author: "mochibear"
+format: html
+editor: visual
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readr)
+```
+
+# Load data
+
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+data <- read_csv(file.path(data_dir, "clean/filtered/regt.csv")) 
+```
+
+
+# check dataset
+```{r}
+View(data)
+cat("Unique people:", n_distinct(data$respondent_id), "\n")
+colnames(data)
+str(data)
+summary(data)
+```

@@ -1,0 +1,215 @@
+---
+title: "merge"
+author: "mochibear"
+format: html
+editor: source
+---
+
+```{r}
+library(tidyverse)
+library(missForest)
+```
+
+#load data
+```{r}
+data_dir <- "/Users/maggieheimvik/Desktop/COPE/data/dataset"
+
+atq <- read_csv(file.path(data_dir, "clean/atq.csv")) 
+bdi <- read_csv(file.path(data_dir, "clean/bdi.csv")) 
+iip <- read_csv(file.path(data_dir, "clean/iip.csv")) 
+mcq <- read_csv(file.path(data_dir, "clean/mcq.csv")) 
+pswq <- read_csv(file.path(data_dir, "clean/pswq.csv")) 
+scl <- read_csv(file.path(data_dir, "clean/scl.csv")) 
+#outcome variable
+bai <- read_csv(file.path(data_dir, "clean/bai.csv")) 
+```
+
+#merge
+```{r}
+datasets <- list(atq, bdi, iip, mcq, pswq, scl, bai)
+
+merged_data <- reduce(datasets, full_join, by = c("respondent_id", "treatment_id", "assessment_context_label"))
+
+#View(merged_data)
+```
+
+# define variables 
+```{r}
+questionnaire_scores <- c(
+  "atq_total", "bdi_ca", "bdi_sa",
+  "iip_domineering", "iip_vindictive", "iip_cold", "iip_inhibited", 
+  "iip_nonassertive", "iip_accommodating", "iip_sacrificing", "iip_intrusive",
+  "mcq_cc", "mcq_pos", "mcq_csc", "mcq_neg", "mcq_nc",
+  "pswq_core", "pswq_uncontrol", "pswq_engagement",
+  "scl_somatization", "scl_obsessive", "scl_interpersonal", "scl_depression",
+  "scl_anxiety", "scl_hostility", "scl_phobic", "scl_paranoid", "scl_psychoticism",
+  "bai_total"  # Include BAI here since Admission BAI is a predictor
+)
+
+predictor_scores <- setdiff(questionnaire_scores, "bai_total")
+```
+
+# filter only those with bai post-treatment scores
+```{r}
+has_post_bai <- merged_data %>%
+  filter(assessment_context_label == "Post-treatment", !is.na(bai_total)) %>%
+  distinct(respondent_id, treatment_id)
+
+analysis_data <- semi_join(merged_data, has_post_bai, by = c("respondent_id", "treatment_id"))
+
+#check
+print(table(analysis_data$assessment_context_label))
+```
+
+# Admission replacement
+if they are missing admission scores take their asessment scores
+```{r}
+has_admission <- analysis_data %>%
+  filter(assessment_context_label == "Admission") %>%
+  distinct(respondent_id, treatment_id)
+
+needs_substitution <- analysis_data %>%
+  filter(assessment_context_label == "Assessment") %>%
+  anti_join(has_admission, by = c("respondent_id", "treatment_id"))
+
+final_data <- analysis_data %>%
+  filter(assessment_context_label != "Assessment") %>%
+  bind_rows(needs_substitution %>% mutate(assessment_context_label = "Admission"))
+
+# check
+print(table(final_data$assessment_context_label))
+```
+
+#keep only those with both admin and post
+```{r}
+has_both <- final_data %>%
+  count(respondent_id, treatment_id) %>%
+  filter(n == 2)
+
+final_data <- semi_join(final_data, has_both, by = c("respondent_id", "treatment_id"))
+
+#check
+print(table(final_data$assessment_context_label))
+```
+
+# exclude rows missing <2
+```{r}
+final_data <- final_data %>%
+  mutate(n_missing = rowSums(is.na(across(all_of(questionnaire_scores)))))  # Use questionnaire_scores here
+
+print("Missing by timepoint:")
+final_data %>%
+  group_by(assessment_context_label) %>%
+  summarise(
+    rows = n(),
+    any_missing = sum(n_missing > 0),
+    mean_missing = mean(n_missing)
+  )
+
+patients_to_exclude <- final_data %>%
+  filter(n_missing > 2) %>%
+  distinct(respondent_id, treatment_id)
+
+print(paste("Patient-treatments excluded:", nrow(patients_to_exclude)))
+
+print(paste("Patient-treatments needing imputation:", 
+            final_data %>% filter(n_missing > 0) %>% distinct(respondent_id, treatment_id) %>% nrow()))
+
+final_data <- final_data %>%
+  anti_join(patients_to_exclude, by = c("respondent_id", "treatment_id"))
+
+#check
+print(table(final_data$assessment_context_label))
+```
+```{r}
+# Calculate missingness for each column
+missing_summary <- final_data %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "pct_missing")
+
+# Plot
+ggplot(missing_summary, aes(x = reorder(variable, -pct_missing), y = pct_missing)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = sprintf("%.1f%%", pct_missing)), 
+            vjust = -0.5, size = 3) +
+  labs(
+    title = "mcq - Missing Data by Variable",
+    x = "Variable",
+    y = "% Missing"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+# imputation
+```{r}
+admission_data <- final_data %>% filter(assessment_context_label == "Admission")
+post_data <- final_data %>% filter(assessment_context_label == "Post-treatment")
+
+if (any(is.na(admission_data[questionnaire_scores]))) {
+  set.seed(123)
+  imputed_adm <- missForest(as.data.frame(admission_data[questionnaire_scores]))
+  print(paste("Admission NRMSE:", round(imputed_adm$OOBerror[1], 4)))
+  admission_data[questionnaire_scores] <- imputed_adm$ximp
+}
+
+if (any(is.na(post_data[predictor_scores]))) {
+  set.seed(123)
+  imputed_post <- missForest(as.data.frame(post_data[predictor_scores]))
+  print(paste("Post-treatment NRMSE:", round(imputed_post$OOBerror[1], 4)))
+  post_data[predictor_scores] <- imputed_post$ximp
+}
+```
+
+#recombine and clean
+```{r}
+final_data <- bind_rows(admission_data, post_data) %>%
+  select(-n_missing)
+```
+
+#verify
+```{r}
+print("Missing values after imputation:")
+final_data %>%
+  group_by(assessment_context_label) %>%
+  summarise(
+    missing_predictors = sum(is.na(across(all_of(predictor_scores)))),
+    missing_bai = sum(is.na(bai_total))
+  )
+```
+
+#check
+```{r}
+print("Rows per patient-treatment (should all be 2):")
+final_data %>%
+  count(respondent_id, treatment_id) %>%
+  filter(n != 2)
+
+print(paste("Total missing predictors:", 
+            sum(is.na(final_data %>% select(all_of(predictor_scores))))))
+
+print(paste("Missing post-treatment BAI:", 
+            sum(is.na(final_data %>% filter(assessment_context_label == "Post-treatment") %>% pull(bai_total)))))
+```
+
+```{r}
+summary(final_data)
+view(final_data)
+print(table(final_data$assessment_context_label))
+
+```
+
+```{r}
+write_csv(final_data, file.path(data_dir, "clean/final_analysis_data.csv"))
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
